@@ -1,0 +1,15 @@
+D:\GitHub\Enigma\FetchPics\bin\Debug\net6.0\FetchPics.exe
+D:\GitHub\Enigma\FetchPics\bin\Debug\net6.0\FetchPics.deps.json
+D:\GitHub\Enigma\FetchPics\bin\Debug\net6.0\FetchPics.runtimeconfig.json
+D:\GitHub\Enigma\FetchPics\bin\Debug\net6.0\FetchPics.dll
+D:\GitHub\Enigma\FetchPics\bin\Debug\net6.0\ref\FetchPics.dll
+D:\GitHub\Enigma\FetchPics\bin\Debug\net6.0\FetchPics.pdb
+D:\GitHub\Enigma\FetchPics\obj\Debug\net6.0\FetchPics.csproj.AssemblyReference.cache
+D:\GitHub\Enigma\FetchPics\obj\Debug\net6.0\FetchPics.GeneratedMSBuildEditorConfig.editorconfig
+D:\GitHub\Enigma\FetchPics\obj\Debug\net6.0\FetchPics.AssemblyInfoInputs.cache
+D:\GitHub\Enigma\FetchPics\obj\Debug\net6.0\FetchPics.AssemblyInfo.cs
+D:\GitHub\Enigma\FetchPics\obj\Debug\net6.0\FetchPics.csproj.CoreCompileInputs.cache
+D:\GitHub\Enigma\FetchPics\obj\Debug\net6.0\FetchPics.dll
+D:\GitHub\Enigma\FetchPics\obj\Debug\net6.0\ref\FetchPics.dll
+D:\GitHub\Enigma\FetchPics\obj\Debug\net6.0\FetchPics.pdb
+D:\GitHub\Enigma\FetchPics\obj\Debug\net6.0\FetchPics.genruntimeconfig.cache

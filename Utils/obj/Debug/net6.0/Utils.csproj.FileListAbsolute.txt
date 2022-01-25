@@ -1,0 +1,11 @@
+D:\GitHub\Enigma\Utils\bin\Debug\net6.0\Utils.deps.json
+D:\GitHub\Enigma\Utils\bin\Debug\net6.0\Utils.dll
+D:\GitHub\Enigma\Utils\bin\Debug\net6.0\ref\Utils.dll
+D:\GitHub\Enigma\Utils\bin\Debug\net6.0\Utils.pdb
+D:\GitHub\Enigma\Utils\obj\Debug\net6.0\Utils.GeneratedMSBuildEditorConfig.editorconfig
+D:\GitHub\Enigma\Utils\obj\Debug\net6.0\Utils.AssemblyInfoInputs.cache
+D:\GitHub\Enigma\Utils\obj\Debug\net6.0\Utils.AssemblyInfo.cs
+D:\GitHub\Enigma\Utils\obj\Debug\net6.0\Utils.csproj.CoreCompileInputs.cache
+D:\GitHub\Enigma\Utils\obj\Debug\net6.0\Utils.dll
+D:\GitHub\Enigma\Utils\obj\Debug\net6.0\ref\Utils.dll
+D:\GitHub\Enigma\Utils\obj\Debug\net6.0\Utils.pdb

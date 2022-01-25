@@ -1,0 +1,46 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "cde98f43-c1cf-4024-9c6f-f9ecbe575e9c": {
+      "ProjectGuid": "cde98f43-c1cf-4024-9c6f-f9ecbe575e9c",
+      "DisplayName": "EnigmaGUI",
+      "ColorIndex": 0
+    },
+    "011c6e9b-2a6e-452b-a248-109fe41db9a6": {
+      "ProjectGuid": "011c6e9b-2a6e-452b-a248-109fe41db9a6",
+      "DisplayName": "Utils",
+      "ColorIndex": 1
+    },
+    "26e347cc-89b2-4ef3-b873-1bc8303d4b19": {
+      "ProjectGuid": "26e347cc-89b2-4ef3-b873-1bc8303d4b19",
+      "DisplayName": "TestSuite",
+      "ColorIndex": 2
+    },
+    "02ca7979-5b25-45c9-9c0e-d19c3708543b": {
+      "ProjectGuid": "02ca7979-5b25-45c9-9c0e-d19c3708543b",
+      "DisplayName": "FetchPics",
+      "ColorIndex": 3
+    },
+    "7957a452-58c8-4315-bbef-b3a255d9222e": {
+      "ProjectGuid": "7957a452-58c8-4315-bbef-b3a255d9222e",
+      "DisplayName": "TestSuite",
+      "ColorIndex": 4
+    },
+    "a97a1b38-ba50-4721-b9fd-acb7628e89ed": {
+      "ProjectGuid": "a97a1b38-ba50-4721-b9fd-acb7628e89ed",
+      "DisplayName": "FindCycles",
+      "ColorIndex": 5
+    },
+    "17873344-b00a-4e1b-81f0-ea09b62f462e": {
+      "ProjectGuid": "17873344-b00a-4e1b-81f0-ea09b62f462e",
+      "DisplayName": "BombeViz",
+      "ColorIndex": 6
+    },
+    "bbddd17b-c21c-4c64-9e4e-96ce70ca0725": {
+      "ProjectGuid": "bbddd17b-c21c-4c64-9e4e-96ce70ca0725",
+      "DisplayName": "BombeLogicVisualizer",
+      "ColorIndex": 7
+    }
+  },
+  "NextColorIndex": 8
+}
