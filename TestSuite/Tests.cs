@@ -3,14 +3,16 @@
 // A lot of the code here is throw-away, test the idea, straighten my head, etc. 
 // 
 // http://users.telenet.be/d.rijmenants/en/enigmasim.htm
+// http://www.ellsbury.com/
 
 using System.Diagnostics;
 using System.Text;
 using Utils;
 
+testEllsbury();
 
 bool someTestsFailed = false;
- TestletterPairAttack();
+ //TestletterPairAttack();
 
 // BombeData();
 //TuringOriginalData();
@@ -20,6 +22,21 @@ bool someTestsFailed = false;
 //testLyndatKnownPlugs();
 
 //testLyndatMarkworth();
+
+void testEllsbury()
+{
+    // http://www.ellsbury.com/enigma3.htm
+    Enigma mc = new Enigma(Reflector.UKW_B, Rotor.IV, Rotor.I, Rotor.V, new Plugboard());
+    mc.Rotors[0].SetRing0(22); // mine are 0-based
+    mc.Rotors[1].SetRing0(01); // mine are 0-based
+    mc.Rotors[2].SetRing0(16); // mine are 0-based
+    mc.PlugB.SetWirings("AR KT MW LC XD EJ ZB UY PS HN");
+    mc.ChangeRotorsToShow("RNF");
+    string ciphered = mc.EncodeText("JRM");
+
+    Console.WriteLine($"JRM -> {ciphered}, was expencting BKT, but Enigma simulator also says BGO");
+
+}
 
 void BombeData()
 {

@@ -117,7 +117,7 @@ namespace BombeViz {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/BombeViz;component/bv_main.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/BombeViz;V1.0.0.0;component/bv_main.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\BV_Main.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);
