@@ -1,17 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Utils;
 
 // Purpose of this program is to help us animate and understand the Bombe, particularly the impact of Welchman's
 // diagonal board. So I'm drawing inspiration, etc. from http://www.ellsbury.com/bombe3.htm 
@@ -21,7 +14,7 @@ using System.Windows.Shapes;
 
 namespace TinyBombe
 {
-    
+
     public partial class MainWindow : Window
     {
 
@@ -82,14 +75,7 @@ namespace TinyBombe
             makeBuses();
             makeDiagonalBoard();
 
-            addScrambler(Brushes.SandyBrown, 8, 2, 2, 3, 0);
-            addScrambler(Brushes.Tan, 8, 3, 4, 7, 1);
-            addScrambler(Brushes.Cyan, 4, 2, 3, 5, 2);
-            addScrambler(Brushes.LightSalmon, 5, 0, 3, 5, 3);
-            addScrambler(Brushes.LightYellow, 2, 2, 3, 4, 4);
-            addScrambler(Brushes.LightPink, 7, 5, 6, 7, 5);
-            updateScramblerVisuals();
-
+            plugUpTestCase();
 
         }
 
@@ -99,6 +85,26 @@ namespace TinyBombe
             Canvas c = new Canvas() { Background = b, Width = ScramblerSize, Height = ScramblerSize };
             ScramberCanvases.Add(c);
             placeScrambler(c, row, leftBus, col, rightBus);         
+        }
+
+        private void addScramblers(string crib, string cipher)
+        {
+            Crib.Text = $"{crib}{Environment.NewLine}{cipher}";
+            Placements places = new Placements();
+            for (int i = 0; i < crib.Length; i++)
+            {
+                int leftBus = crib[i] - 'A';
+                int rightBus = cipher[1] - 'A';
+                if (leftBus > rightBus) // wrong way around?
+                { int temp = leftBus;
+                    leftBus = rightBus;
+                    rightBus = temp;
+                }
+                int col = (leftBus + rightBus) / 2;
+                int row = places.PlaceIt(leftBus, col, rightBus);
+                // Find first available row where we don't bump into existing scrambler placements
+                addScrambler(Brushes.Tan, row, leftBus, col, rightBus, i);
+            }
         }
 
         int xFor(int bus, int wire)
@@ -144,7 +150,7 @@ namespace TinyBombe
         void makeBuses()
         {
             int botY = RowHeight * Rows;
-            int topY = 15*WireChannelWidth + TopMargin;
+            int topY = 15 * WireChannelWidth + TopMargin;
             for (int bus = 0; bus < 8; bus++)
             {
                 for (int wire = 0; wire < 8; wire++)
@@ -155,9 +161,17 @@ namespace TinyBombe
                     busWires[bus, wire] = p;
                     Canvas.SetLeft(p, 0);
                     Canvas.SetTop(p, 0);
-                    backLayer.Children.Add(p);                  
-                  }
+                    backLayer.Children.Add(p);
+                }
+
+                // Label the bus
+                Label name = new Label() { Foreground = Brushes.Black, Content = (char)('A' + bus), FontFamily = new FontFamily("Consolas"), FontSize=18, FontWeight=FontWeights.Bold};
+                Canvas.SetLeft(name, xFor(bus,2));
+                Canvas.SetTop(name, botY);
+                backLayer.Children.Add(name);
+
             }
+
         }
 
        void placeScrambler(Canvas scramblerCanvas, int row, int leftBus, int posCol, int rightBus)
@@ -205,7 +219,16 @@ namespace TinyBombe
 
         private void button_Click(object sender, RoutedEventArgs e)
         {
-         
+            plugUpTestCase();
+        }
+
+        private void plugUpTestCase()
+        {
+            // Test case BEACHHEAD -. CFEFBEBHE at index position 101 
+
+            addScramblers("BEACHHEAD", "CFEFBEBHE");
+ 
+            updateScramblerVisuals();
         }
 
         private void btnApply_Click(object sender, RoutedEventArgs e)

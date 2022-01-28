@@ -9,3 +9,4 @@ D:\GitHub\Enigma\Utils\obj\Debug\net6.0\Utils.csproj.CoreCompileInputs.cache
 D:\GitHub\Enigma\Utils\obj\Debug\net6.0\Utils.dll
 D:\GitHub\Enigma\Utils\obj\Debug\net6.0\ref\Utils.dll
 D:\GitHub\Enigma\Utils\obj\Debug\net6.0\Utils.pdb
+D:\GitHub\Enigma\Utils\obj\Debug\net6.0\Utils.csproj.AssemblyReference.cache

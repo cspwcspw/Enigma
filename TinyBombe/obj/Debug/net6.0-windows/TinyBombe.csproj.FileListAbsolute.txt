@@ -19,3 +19,6 @@ D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\TinyBombe.dll
 D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\ref\TinyBombe.dll
 D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\TinyBombe.pdb
 D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\TinyBombe.genruntimeconfig.cache
+D:\GitHub\Enigma\TinyBombe\bin\Debug\net6.0-windows\Utils.dll
+D:\GitHub\Enigma\TinyBombe\bin\Debug\net6.0-windows\Utils.pdb
+D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\TinyBombe.csproj.CopyComplete

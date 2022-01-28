@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Controls;
 
-namespace TinyBombe
+namespace Utils
 {
     public class Scrambler
     {
@@ -25,6 +24,20 @@ namespace TinyBombe
             {
                 return theMap[index % mapSz];
             }
+        }
+
+        public string EncryptText(string plainText)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach(char c in plainText)
+            {
+                int k = c - 'A';
+                sb.Append(this[Index][k]);
+                Index = (Index+1) % 512;  // OK, so this machine steps after the encoding, not before.
+            }
+
+
+            return sb.ToString();
         }
 
         public static string ToWindowView(int indx)

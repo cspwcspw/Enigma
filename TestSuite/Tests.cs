@@ -9,7 +9,37 @@ using System.Diagnostics;
 using System.Text;
 using Utils;
 
-testEllsbury();
+// testEllsbury();
+
+findInterestingCribsForMiniBombe();
+
+void findInterestingCribsForMiniBombe()
+{
+    Scrambler s = new Scrambler(0);
+    string plainText = "BEACHHEAD";
+
+    for (int i=0; i < 512; i++)
+    {
+        s.Index = i;
+        string cipher = s.EncryptText(plainText);
+        Graph g = new Graph(cipher, plainText);
+        LoopGatherer gt = g.findLoops();
+        int n = gt.TheLoops.Count;
+        if (i == 49 || i == 91 || i == 101)
+        {
+            Console.WriteLine($"{i.ToString("D3")} {plainText} -> {cipher}  loops found = {n}");
+            foreach (var x in gt.TheLoops)
+            {
+                Console.WriteLine(x);
+            }
+        }
+    }
+
+    // Top 3 finds are at indexes 49(15 loops) 91 (15 loops and 101 (7 loops)
+    // 049 BEACHHEAD->EDCBBCAHC  loops found = 15
+    // 091 BEACHHEAD->CDDABEBHB  loops found = 15
+    //  101 BEACHHEAD->CFEFBEBHE loops found = 7
+}
 
 bool someTestsFailed = false;
  //TestletterPairAttack();
