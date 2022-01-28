@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 
 namespace TinyBombe
 {
@@ -10,6 +11,12 @@ namespace TinyBombe
     {
         const int mapSz = 8 * 8 * 8;
         public int Index { get; set; }  // an integer representing the scrambler's present position
+        public int StepOffsetInMenu { get; private set; }
+
+        public Scrambler(int stepOffset)
+        {
+            StepOffsetInMenu = stepOffset;
+        }
 
         // The Core in-out wiring map is exposed via indexing
         public string this[int index]
@@ -20,7 +27,7 @@ namespace TinyBombe
             }
         }
 
-        public string ToWindowView(int indx)
+        public static string ToWindowView(int indx)
         {
             char[] buf = new char[3];
             buf[2] = (char)('A' + indx % 8);
@@ -29,6 +36,11 @@ namespace TinyBombe
             indx = indx / 8;
             buf[0] = (char)('A' + indx % 8);
             return new string(buf);
+        }
+
+        public static int FromWindowView(string s)
+        {
+            return (s[0] - 'A') * 8 * 8 + (s[1] - 'A') * 8 + (s[2] - 'A');
         }
 
         //static Scrambler()   // Once-off code generated the all-time map

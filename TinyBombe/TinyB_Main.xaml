@@ -8,6 +8,8 @@
         Title="Pete's 8-Letter Bombe Visualizer" Height="800" Width="1200">
     <Grid x:Name="mainGrid">
         <Button x:Name="button" Content="Button" HorizontalAlignment="Left" Margin="48,10,0,0" VerticalAlignment="Top" Click="button_Click"/>
+        <TextBox x:Name="tbWindow" HorizontalAlignment="Left" Height="20" Margin="168,10,0,0" TextWrapping="Wrap" Text="AAA" VerticalAlignment="Top" Width="51"/>
+        <Button x:Name="btnApply" Content="Apply" HorizontalAlignment="Left" Margin="234,10,0,0" VerticalAlignment="Top" Click="btnApply_Click"/>
 
     </Grid>
 </Window>
