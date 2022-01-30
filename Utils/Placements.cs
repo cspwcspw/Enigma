@@ -17,7 +17,7 @@ namespace Utils
 
         public int PlaceIt(int leftBus, int col, int rightBus)
         {
-            int row = 8;
+            int row = 10;
             while (true) 
             {
                 if (!hasClash(row, leftBus, rightBus)) break;

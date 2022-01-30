@@ -12,9 +12,15 @@ namespace Utils
         public int Index { get; set; }  // an integer representing the scrambler's present position
         public int StepOffsetInMenu { get; private set; }
 
-        public Scrambler(int stepOffset)
+        public int LeftBus { get; private set; }  // just a place to keep some info for the GUI
+        public int RightBus { get; private set; }
+
+
+        public Scrambler(int stepOffset, int left, int right)
         {
             StepOffsetInMenu = stepOffset;
+            LeftBus = left;
+            RightBus = right;
         }
 
         // The Core in-out wiring map is exposed via indexing

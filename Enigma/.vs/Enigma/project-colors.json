@@ -40,7 +40,17 @@
       "ProjectGuid": "bbddd17b-c21c-4c64-9e4e-96ce70ca0725",
       "DisplayName": "BombeLogicVisualizer",
       "ColorIndex": 7
+    },
+    "395df65e-ed0b-434e-aa10-c6098a04bf8e": {
+      "ProjectGuid": "395df65e-ed0b-434e-aa10-c6098a04bf8e",
+      "DisplayName": "TinyBombe",
+      "ColorIndex": 8
+    },
+    "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3": {
+      "ProjectGuid": "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3",
+      "DisplayName": "Miscellaneous Files",
+      "ColorIndex": -1
     }
   },
-  "NextColorIndex": 8
+  "NextColorIndex": 9
 }

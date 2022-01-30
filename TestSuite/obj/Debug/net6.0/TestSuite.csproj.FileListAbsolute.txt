@@ -6,7 +6,6 @@ D:\GitHub\Enigma\TestSuite\bin\Debug\net6.0\ref\TestSuite.dll
 D:\GitHub\Enigma\TestSuite\bin\Debug\net6.0\TestSuite.pdb
 D:\GitHub\Enigma\TestSuite\bin\Debug\net6.0\Utils.dll
 D:\GitHub\Enigma\TestSuite\bin\Debug\net6.0\Utils.pdb
-D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\TestSuite.csproj.AssemblyReference.cache
 D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\TestSuite.GeneratedMSBuildEditorConfig.editorconfig
 D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\TestSuite.AssemblyInfoInputs.cache
 D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\TestSuite.AssemblyInfo.cs

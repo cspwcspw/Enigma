@@ -15,22 +15,54 @@ findInterestingCribsForMiniBombe();
 
 void findInterestingCribsForMiniBombe()
 {
-    Scrambler s = new Scrambler(0);
-    string plainText = "BEACHHEAD";
+    Scrambler s = new Scrambler(0, 3, 4);
+    string fullPlainText = "BEACHHEAD";
 
-    for (int i=0; i < 512; i++)
-    {
-        s.Index = i;
-        string cipher = s.EncryptText(plainText);
-        Graph g = new Graph(cipher, plainText);
-        LoopGatherer gt = g.findLoops();
-        int n = gt.TheLoops.Count;
-        if (i == 49 || i == 91 || i == 101)
+
+
+
+    //  for (int leng = fullPlainText.Length; leng > 0; leng--)
+    int leng = 5;
         {
-            Console.WriteLine($"{i.ToString("D3")} {plainText} -> {cipher}  loops found = {n}");
-            foreach (var x in gt.TheLoops)
+        Dictionary<string, List<int>> hits = new Dictionary<string, List<int>>();
+        string plainText = fullPlainText.Substring(0, leng);
+
+        for (int i = 0; i < 512; i++)
+        {
+            s.Index = i;
+            string cipher = s.EncryptText(plainText);
+            if (hits.Keys.Contains(cipher))
             {
-                Console.WriteLine(x);
+                hits[cipher].Add(i);
+            }
+            else
+            {
+                hits[cipher] = new List<int>() { i };
+            }
+        }
+        Console.WriteLine($"trying {plainText} got {hits.Count} entries in the dict.");
+
+        // at indexes 110 and 128 (close enough together) both BEACH -> GBEEC, so that is a nice test case for single stepping, etc.
+        //        BEACHHEAD->GBEECECBC at BFG
+        //        BEACHHEAD->GBEECBGFH at CAA  --- If we use this we'll get one false stop at BFG before success at CAA
+        s.Index = 110;
+        string result1 = s.EncryptText("BEACHHEAD");
+        s.Index = 128;
+        string result2 = s.EncryptText("BEACHHEAD");
+
+        Console.WriteLine($"BEACHHEAD -> {result1} at {Scrambler.ToWindowView(110)}");
+        Console.WriteLine($"BEACHHEAD -> {result2} at {Scrambler.ToWindowView(128)}");
+
+        List<int> interesting = hits["AHEEB"];  // Has a cycle of length 4, no false stops
+        foreach(var entry in hits)
+        {
+            if (entry.Value.Count > 1)
+            { Console.Write($"{entry.Key} is found at offsets ");
+                foreach (var val in entry.Value)
+                {
+                    Console.Write($"{val} ");
+                }
+                Console.WriteLine();
             }
         }
     }
@@ -39,9 +71,30 @@ void findInterestingCribsForMiniBombe()
     // 049 BEACHHEAD->EDCBBCAHC  loops found = 15
     // 091 BEACHHEAD->CDDABEBHB  loops found = 15
     //  101 BEACHHEAD->CFEFBEBHE loops found = 7
+
+    string crib = "BEACH";
+    for (int i = 0; i < 512; i++)
+    {
+        s.Index = i;
+        string cipher = s.EncryptText(crib);
+        Graph g = new Graph(cipher, crib);
+        LoopGatherer gt = g.findLoops();
+        int n = gt.TheLoops.Count;
+        //if (i == 49 || i == 91 || i == 101)
+        //{
+        if (n > 0)
+        {
+            Console.WriteLine($"{i.ToString("D3")} {crib} -> {cipher}  loops = {n}");
+            foreach (var x in gt.TheLoops)
+            {
+                Console.WriteLine(x);
+            }
+        }
+    }
 }
 
-bool someTestsFailed = false;
+
+    bool someTestsFailed = false;
  //TestletterPairAttack();
 
 // BombeData();
