@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
@@ -27,7 +23,7 @@ namespace TinyBombe
             this.Add(new Connection(a, b));
         }
 
-        internal void MakeItLive(Shape p)
+        public void MakeItLive(Shape p)
         {
            p.Stroke = Brushes.Red;
            p.Fill = Brushes.Red;

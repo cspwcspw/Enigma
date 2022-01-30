@@ -7,10 +7,14 @@
         mc:Ignorable="d"
         Title="Pete's 8-Letter Bombe Visualizer" Height="800" Width="1200">
     <Grid x:Name="mainGrid"  >
-        <TextBox x:Name="tbWindow" HorizontalAlignment="Left" Height="20" Margin="168,10,0,0" TextWrapping="Wrap" Text="AAA" VerticalAlignment="Top" Width="51"/>
-        <Button x:Name="btnApply" Content="Apply" HorizontalAlignment="Left" Margin="234,10,0,0" VerticalAlignment="Top" Click="btnApply_Click" Width="60"/>
+        <TextBox x:Name="tbWindow" HorizontalAlignment="Left" Height="20" Margin="118,10,0,0" TextWrapping="Wrap" Text="AAA" VerticalAlignment="Top" Width="51"/>
+        <Button x:Name="btnApply" Content="Apply" HorizontalAlignment="Left" Margin="182,10,0,0" VerticalAlignment="Top" Click="btnApply_Click" Width="60"/>
         <TextBox x:Name="Crib" HorizontalAlignment="Left" Height="19" Text ="BEACH" MaxLines="2" Margin="335,21,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="97" FontFamily="Consolas" FontWeight="Bold" FontSize="14"/>
-        <TextBox x:Name="Cipher" HorizontalAlignment="Left" Height="20"  Text="GBEECBGFH" VerticalAlignment="Top" Width="315" Margin="335,0,0,0"/>
+        <TextBox x:Name="Cipher" HorizontalAlignment="Left" Height="20"  Text="GBEECBGFH" VerticalAlignment="Top" Width="315" Margin="335,0,0,0"   FontFamily="Consolas" FontWeight="Bold" FontSize="14"/>
+        <Label  Content="Crib:" HorizontalAlignment="Left" Margin="306,22,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
+        <Label  Content="Intercepted:" HorizontalAlignment="Left" Margin="269,1,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
+        <Label  Content="Recovered Message at these wheel settings:" HorizontalAlignment="Left" Margin="667,2,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
+        <Label  x:Name="Recovered" Content="Hello, World!" HorizontalAlignment="Left" Margin="667,22,0,0" Padding="0"    VerticalAlignment="Top" Height="18" FontFamily="Consolas" FontWeight="Bold" FontSize="14"/>
 
     </Grid>
 </Window>

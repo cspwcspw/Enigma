@@ -46,13 +46,14 @@ void findInterestingCribsForMiniBombe()
         //        BEACHHEAD->GBEECECBC at BFG
         //        BEACHHEAD->GBEECBGFH at CAA  --- If we use this we'll get one false stop at BFG before success at CAA
         s.Index = 110;
-        string result1 = s.EncryptText("BEACHHEAD");
+        string pt = "BEACHHEADBEACHHEADBEACHHEADBEACHHEAD";
+        string result1 = s.EncryptText(pt);
         s.Index = 128;
-        string result2 = s.EncryptText("BEACHHEAD");
+        string result2 = s.EncryptText(pt);
 
-        Console.WriteLine($"BEACHHEAD -> {result1} at {Scrambler.ToWindowView(110)}");
-        Console.WriteLine($"BEACHHEAD -> {result2} at {Scrambler.ToWindowView(128)}");
-
+        Console.WriteLine($"{pt} -> {result1} at {Scrambler.ToWindowView(110)}");
+        Console.WriteLine($"{pt} -> {result2} at {Scrambler.ToWindowView(128)}");
+    
         List<int> interesting = hits["AHEEB"];  // Has a cycle of length 4, no false stops
         foreach(var entry in hits)
         {

@@ -17,16 +17,14 @@ namespace Utils
 
         public int PlaceIt(int leftBus, int col, int rightBus)
         {
-            int row = 10;
+            int row = 0;
             while (true) 
             {
                 if (!hasClash(row, leftBus, rightBus)) break;
-                row--;
+                row++;
             }
 
             inUse.Add(new Placement(leftBus, col, rightBus, row));
-
-
             return row;
         }
 

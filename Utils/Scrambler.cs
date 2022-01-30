@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace Utils
 {
@@ -14,13 +10,14 @@ namespace Utils
 
         public int LeftBus { get; private set; }  // just a place to keep some info for the GUI
         public int RightBus { get; private set; }
+        public object? Tag { get; set; }        // Keep a reference to the UIElement/Canvas when used with a WPF GUI
 
-
-        public Scrambler(int stepOffset, int left, int right)
+        public Scrambler(int stepOffset, int left, int right, object? tag = null)
         {
             StepOffsetInMenu = stepOffset;
             LeftBus = left;
             RightBus = right;
+            Tag = tag;
         }
 
         // The Core in-out wiring map is exposed via indexing
@@ -41,8 +38,6 @@ namespace Utils
                 sb.Append(this[Index][k]);
                 Index = (Index+1) % 512;  // OK, so this machine steps after the encoding, not before.
             }
-
-
             return sb.ToString();
         }
 
