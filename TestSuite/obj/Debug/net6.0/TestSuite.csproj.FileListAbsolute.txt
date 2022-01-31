@@ -15,3 +15,4 @@ D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\TestSuite.dll
 D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\ref\TestSuite.dll
 D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\TestSuite.pdb
 D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\TestSuite.genruntimeconfig.cache
+D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\TestSuite.csproj.AssemblyReference.cache

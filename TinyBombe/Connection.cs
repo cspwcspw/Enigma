@@ -15,8 +15,11 @@ namespace TinyBombe
     /// </summary>
     public class Connections : List<Connection>
     {
-        public Connections() : base()
-        { }
+        Brush HotBrush;
+        public Connections(Brush hot) : base()
+        {
+            HotBrush = hot;
+        }
 
         public void Join(Shape a, Shape b)
         {
@@ -25,13 +28,13 @@ namespace TinyBombe
 
         public void MakeItLive(Shape p)
         {
-           p.Stroke = Brushes.Red;
-           p.Fill = Brushes.Red;
+           p.Stroke = HotBrush;
+           p.Fill = HotBrush;
            propagateLiveThroughJoints(p);
         }
         bool isLive(Shape p)
         {
-            return p.Stroke == Brushes.Red;
+            return p.Stroke == HotBrush;
         }
         private void propagateLiveThroughJoints(Shape p)
         {
