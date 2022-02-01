@@ -46,7 +46,7 @@ void findInterestingCribsForMiniBombe()
         //        BEACHHEAD->GBEECECBC at BFG
         //        BEACHHEAD->GBEECBGFH at CAA  --- If we use this we'll get one false stop at BFG before success at CAA
         s.Index = 110;
-        string pt = "BEACHHEADBEACHHEADBEACHHEADBEACHHEAD";
+        string pt = "BEACHHEADGEACHGBEACHGBABEGFEDGDADGBEAD";
         string result1 = s.EncryptText(pt);
         s.Index = 128;
         string result2 = s.EncryptText(pt);
