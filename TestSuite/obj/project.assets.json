@@ -2,6 +2,16 @@
   "version": 3,
   "targets": {
     "net6.0": {
+      "TinyBombe/1.0.0": {
+        "type": "project",
+        "framework": "Unsupported,Version=v0.0",
+        "compile": {
+          "bin/placeholder/TinyBombe.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/TinyBombe.dll": {}
+        }
+      },
       "Utils/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v6.0",
@@ -15,6 +25,11 @@
     }
   },
   "libraries": {
+    "TinyBombe/1.0.0": {
+      "type": "project",
+      "path": "../TinyBombe/TinyBombe.csproj",
+      "msbuildProject": "../TinyBombe/TinyBombe.csproj"
+    },
     "Utils/1.0.0": {
       "type": "project",
       "path": "../Utils/Utils.csproj",
@@ -23,6 +38,7 @@
   },
   "projectFileDependencyGroups": {
     "net6.0": [
+      "TinyBombe >= 1.0.0",
       "Utils >= 1.0.0"
     ]
   },
@@ -58,6 +74,9 @@
         "net6.0": {
           "targetAlias": "net6.0",
           "projectReferences": {
+            "D:\\GitHub\\Enigma\\TinyBombe\\TinyBombe.csproj": {
+              "projectPath": "D:\\GitHub\\Enigma\\TinyBombe\\TinyBombe.csproj"
+            },
             "D:\\GitHub\\Enigma\\Utils\\Utils.csproj": {
               "projectPath": "D:\\GitHub\\Enigma\\Utils\\Utils.csproj"
             }
@@ -91,5 +110,16 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.101\\RuntimeIdentifierGraph.json"
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1201",
+      "level": "Error",
+      "message": "Project TinyBombe is not compatible with net6.0 (.NETCoreApp,Version=v6.0). Project TinyBombe supports: net6.0-windows7.0 (.NETCoreApp,Version=v6.0)",
+      "libraryId": "TinyBombe",
+      "targetGraphs": [
+        "net6.0"
+      ]
+    }
+  ]
 }

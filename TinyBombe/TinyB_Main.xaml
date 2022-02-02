@@ -11,22 +11,26 @@
             <MenuItem Header="Samples"/>
         </Menu>
 
-        <TextBox x:Name="tbWindow" HorizontalAlignment="Left" Height="20" Margin="403,3,0,0" TextWrapping="Wrap" Text="AAA" CharacterCasing="Upper"  VerticalAlignment="Top" Width="36" KeyDown="tbWindow_KeyDown"/>
-        <Button x:Name="btnBack" Content="-" HorizontalAlignment="Left" Margin="379,3,0,0" VerticalAlignment="Top"   Width="20" Height="21" Click="btnBack_Click"/>
-        <Button x:Name="btnFwd" Content="+" HorizontalAlignment="Left" Margin="443,3,0,0" VerticalAlignment="Top"  Width="20" Height="21" Click="btnFwd_Click"/>
+        <TextBox x:Name="tbWindow" HorizontalAlignment="Left" Height="20" Margin="373,3,0,0" TextWrapping="Wrap" Text="AAA" CharacterCasing="Upper"  VerticalAlignment="Top" Width="36" KeyDown="tbWindow_KeyDown"/>
+        <Button x:Name="btnBack" Content="-" HorizontalAlignment="Left" Margin="349,3,0,0" VerticalAlignment="Top"   Width="20" Height="21" Click="btnBack_Click"/>
+        <Button x:Name="btnFwd" Content="+" HorizontalAlignment="Left" Margin="413,3,0,0" VerticalAlignment="Top"  Width="20" Height="21" Click="btnFwd_Click"/>
 
 
-        <TextBox x:Name="Crib" HorizontalAlignment="Left" Height="19" Text ="BEACH"  CharacterCasing="Upper"  Margin="551,22,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="150" FontFamily="Consolas" FontWeight="Bold" FontSize="14" KeyDown="Crib_KeyDown"/>
-        <TextBox x:Name="Cipher" HorizontalAlignment="Left" Height="20"  Text="GBEECBGFH" CharacterCasing="Upper" VerticalAlignment="Top" Width="315" Margin="551,0,0,0"   FontFamily="Consolas" FontWeight="Bold" FontSize="14" KeyDown="Cipher_KeyDown"/>
-        <Label  Content="Crib:" HorizontalAlignment="Left" Margin="518,22,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
-        <Label  Content="Intercepted:" HorizontalAlignment="Left" Margin="481,1,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
-        <Label  Content="Recovered Message at these wheel settings:" HorizontalAlignment="Left" Margin="883,2,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
-        <Label  x:Name="Recovered" Content="Hello, World!" HorizontalAlignment="Left" Margin="883,22,0,0" Padding="0"    VerticalAlignment="Top" Height="18" FontFamily="Consolas" FontWeight="Bold" FontSize="14"/>
-        <CheckBox x:Name="cbReplaceSpaces" Content="Replace 'G's by spaces" HorizontalAlignment="Left" Margin="729,23,0,0" VerticalAlignment="Top" IsChecked="True" Click="cbReplaceSpaces_Click"/>
+        <TextBox x:Name="Crib" HorizontalAlignment="Left" Height="19" Text ="BEACH"  CharacterCasing="Upper"  Margin="521,20,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="315" FontFamily="Consolas" FontWeight="Bold" FontSize="14" KeyDown="Crib_KeyDown"/>
+        <TextBox x:Name="Cipher" HorizontalAlignment="Left" Height="20"  Text="GBEECBGFH" CharacterCasing="Upper" VerticalAlignment="Top" Width="315" Margin="521,0,0,0"   FontFamily="Consolas" FontWeight="Bold" FontSize="14" KeyDown="Cipher_KeyDown"/>
+        <Label  Content="Crib:" HorizontalAlignment="Left" Margin="488,21,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
+        <Label  Content="Intercepted:" HorizontalAlignment="Left" Margin="451,1,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
+        <Label  Content="Decoded:" HorizontalAlignment="Left" Margin="853,2,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
+        <Label  x:Name="Recovered" Content="Hello, World!" HorizontalAlignment="Left" Margin="853,22,0,0" Padding="0"    VerticalAlignment="Top" Height="18" FontFamily="Consolas" FontWeight="Bold" FontSize="14"/>
+        <CheckBox x:Name="cbReplaceSpaces" Content="Replace 'G's by spaces" HorizontalAlignment="Left" Margin="930,3,0,0" VerticalAlignment="Top" IsChecked="True" Click="cbReplaceSpaces_Click"/>
         <CheckBox x:Name="cbUseDiagonalBoard" Content="Use Welchman's Diagonal Board" HorizontalAlignment="Left" Margin="6,3,0,0" VerticalAlignment="Top" IsChecked="True" Click="cbUseDiagonalBoard_Click"/>
         <Button x:Name="btnCloseAll" Content="Close all"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="8,22,0,0" VerticalAlignment="Top" Width="56" Click="btnCloseAll_Click"/>
         <Button x:Name="btnOpenAll" Content="Open all"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="72,22,0,0" VerticalAlignment="Top" Width="58" Click="btnOpenAll_Click"/>
         <Button x:Name="btnToggleAll" Content="Toggle all"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="140,22,0,0" VerticalAlignment="Top" Width="56" Click="btnToggleAll_Click"/>
+
+        <Button x:Name="btnRestart" Content="Restart"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="298,30,0,0" VerticalAlignment="Top" Width="56" Click="btnRestart_Click"  />
+        <Button x:Name="btnResume" Content="Resume"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="358,30,0,0" VerticalAlignment="Top" Width="58" Click="btnResume_Click"  />
+        <Button x:Name="btnStop" Content="Stop"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="420,30,0,0" VerticalAlignment="Top" Width="56" Click="btnStop_Click"  />
 
 
 

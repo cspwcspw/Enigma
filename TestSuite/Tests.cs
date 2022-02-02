@@ -8,6 +8,8 @@
 using System.Diagnostics;
 using System.Text;
 using Utils;
+using TinyBombe;
+
 
 // testEllsbury();
 
@@ -17,8 +19,6 @@ void findInterestingCribsForMiniBombe()
 {
     Scrambler s = new Scrambler(0, 3, 4);
     string fullPlainText = "BEACHHEAD";
-
-
 
 
     //  for (int leng = fullPlainText.Length; leng > 0; leng--)

@@ -7,11 +7,11 @@ namespace TinyBombe
 
     /// <summary>
     /// Represents an electrical connection between two things (wires, pads, scrambler pin, etc). 
-    /// Electrical components can all be Red or Blue.  We don't keep Model state info
+    /// Electrical components can all be HotBrush colour, or Blue.  We don't keep Model state info
     /// separate from View (e.g. MVC).  Here the Shape Stroke and Fill colours keep 
     /// track of the electrial "hot or not".
     /// Having a collection of bindings allows us to propagate a voltage around
-    /// the TinyBombe.
+    /// the GUI elements of the TinyBombe.
     /// </summary>
     public class Connections : List<Connection>
     {
@@ -32,10 +32,12 @@ namespace TinyBombe
            p.Fill = HotBrush;
            propagateLiveThroughJoints(p);
         }
-        bool isLive(Shape p)
+
+        public bool IsLive(Shape p)
         {
             return p.Stroke == HotBrush;
         }
+
         private void propagateLiveThroughJoints(Shape p)
         {
             foreach (Connection c in this)
@@ -43,7 +45,7 @@ namespace TinyBombe
                 if (p.Equals(c.A))
                 {
                     Shape s = c.B;
-                    if (! isLive(s))
+                    if (! IsLive(s))
                     {
                         MakeItLive(s);
                         propagateLiveThroughJoints(s);
@@ -52,7 +54,7 @@ namespace TinyBombe
                 else if (p.Equals(c.B))
                 {
                     Shape s = c.A;
-                    if (!isLive(s))
+                    if (!IsLive(s))
                     {
                         MakeItLive(s);
                         propagateLiveThroughJoints(s);
