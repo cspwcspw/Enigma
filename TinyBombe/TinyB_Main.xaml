@@ -30,7 +30,8 @@
 
         <Button x:Name="btnRestart" Content="Restart"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="298,30,0,0" VerticalAlignment="Top" Width="56" Click="btnRestart_Click"  />
         <Button x:Name="btnResume" Content="Resume"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="358,30,0,0" VerticalAlignment="Top" Width="58" Click="btnResume_Click"  />
-        <Button x:Name="btnStop" Content="Stop"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="420,30,0,0" VerticalAlignment="Top" Width="56" Click="btnStop_Click"  />
+        <Button x:Name="btnPause" Content="Pause"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="420,30,0,0" VerticalAlignment="Top" Width="56" Click="btnPause_Click"  />
+        <Label x:Name="dbgLabel" Content="Label" HorizontalAlignment="Left" Height="29" Margin="217,26,0,0" VerticalAlignment="Top" Width="56"/>
 
 
 

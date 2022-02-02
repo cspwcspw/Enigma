@@ -61,7 +61,7 @@ namespace TinyBombe
 
         int cribOffsetWithinIntercept = 0;
 
-        DispatcherTimer stepTimer;
+        bool isFreeRunning = false;
 
         #endregion
 
@@ -69,9 +69,6 @@ namespace TinyBombe
         public MainWindow()
         {
             InitializeComponent();
-
-            stepTimer = new DispatcherTimer() { Interval = TimeSpan.FromMilliseconds(3), IsEnabled = false };
-            stepTimer.Tick += StepTimer_Tick;
 
             AddSamplesToMenu();
 
@@ -87,9 +84,27 @@ namespace TinyBombe
             Cipher.Text = "GBEECBGFHEAEAGADFFECBAHHFBGFGHEHHDCCHC";
             Crib.Text = "??ACHHEAD";  
             tbWindow.Text = "BFF";
+
+                bombeCanvas = new Canvas()
+                {
+                    Background = Brushes.PowderBlue,   
+                    Height = botY + 50,
+                    Width = ColWidth * 8 + LeftMargin - 3 * count
+                };
+ 
+            theScroller = new ScrollViewer()
+            {
+                Margin = new Thickness(0, WindowTopMargin, 0, 0),
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto
+            };
+
+            theScroller.Content = bombeCanvas;
+            mainGrid.Children.Add(theScroller);
+
             RebuildBombe();
             // And first time only, change the Window size. 
             this.Height = botY + 140;
+             
         }
 
         private void AddSamplesToMenu()
@@ -103,50 +118,79 @@ namespace TinyBombe
             return x0;
         }
 
+        int count = 0;
         // Trying to untangle connections, make new cross-connects in the scrambers, etc.
-        // when the rotors move is too messy. So I just rebuild the whole GUI from scratch on each step.
+        // when the rotors move is too messy. And the So I just rebuild the whole GUI from scratch on each step.
         void RebuildBombe()
         {
-            normalizeCrib();
-
-            List<int> scramblerRows = getScramblerRowsNeeded(Crib.Text, Cipher.Text);
-            int maxRow = scramblerRows.Max();
-            botY = DiagonalBoardMargin + (maxRow + 1) * RowHeight;
-
-            Scramblers.Clear();
-            Joints.Clear();
-            if (bombeCanvas != null)
+            while (true)
             {
+                normalizeCrib();
+                if (!validateCrib()) return;
+
+                List<int> scramblerRows = getScramblerRowsNeeded(Crib.Text, Cipher.Text);
+                int maxRow = scramblerRows.Max();
+                botY = DiagonalBoardMargin + (maxRow + 1) * RowHeight;
+
+                bombeCanvas.Height = botY + 30;
+
+                Scramblers.Clear();
+                Joints.Clear();
                 bombeCanvas.Children.Clear();
+
+                count++;
+                dbgLabel.Content = $" {mainGrid.Children.Count} ";
+
+                busWires = new Line[8, 8];
+
+                makeBuses();
+
+                if ((bool)cbUseDiagonalBoard.IsChecked)
+                {
+                    makeDiagonalBoard();
+                }
+                addScramblers(Crib.Text, Cipher.Text, scramblerRows);
+                addVoltageSource();
+                RecoverMessage();
+                bool atStop = isTestRegisterTriggered();
+                if (atStop)
+                {
+                    Label stop = new Label() { Content = "Stop!", ToolTip = "This is a candidate - Send it for futher manual analysis.", Foreground = Brushes.Black, FontSize = 28, FontWeight = FontWeights.Bold, Background = Brushes.Magenta };
+                    Canvas.SetTop(stop, 5);
+                    Canvas.SetLeft(stop, xFor(7, 5));
+                    bombeCanvas.Children.Add(stop);
+                    isFreeRunning = false;
+                }
+
+                if (!isFreeRunning) break;
+
+                // The freeRunning case / closed processing loops in general in WPF can be tricky.  We need a magic spell.
+                // Painting the display is a low-prioity deferred task for WPF. so we have to force WPF to paint before doing the next round,
+                // we demand execution of some (empty) code at an even-lower-priority-than-display-updating.
+                // In old Windows Forms this was called DoEvents();
+                Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new Action(delegate { }));
+
+
+                bool endOfRun = advanceWindow();
+                if (endOfRun) break;
             }
+        }
 
-            theScroller = new ScrollViewer()
+
+        private bool validateCrib()
+        {
+            string crib = Crib.Text;
+            string intercept = Cipher.Text;
+            for (int i=0; i < crib.Length; i++)
             {
-                Margin = new Thickness(0, WindowTopMargin, 0, 0),
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto
-            };
-            bombeCanvas = new Canvas()
-            {
-                Background = Brushes.PowderBlue,  // powderblue, lightskyblue
-                Height = botY + 50,
-                Width = ColWidth * 8 + LeftMargin
-            };
-
-            theScroller.Content = bombeCanvas;
-            mainGrid.Children.Add(theScroller);
-
-            busWires = new Line[8, 8];
-
-            makeBuses();
-
-            if ((bool)cbUseDiagonalBoard.IsChecked)
-            {
-                makeDiagonalBoard();
+                if (crib[i] != '?' && crib[i]==intercept[i])
+                {
+                    string msg = $"An Enigma never encodes a letter to itstelf.\nThis crib and ciphertext both have '{crib[i]}' at offset {i}.";
+                    MessageBox.Show(msg, "TinyBombe: Impossible Crib");
+                    return false;
+                }
             }
-            addScramblers(Crib.Text, Cipher.Text, scramblerRows);
-            addVoltageSource();
-            RecoverMessage();
-            isTestRegisterTriggered();
+            return true;
         }
 
         private void normalizeCrib()
@@ -182,6 +226,76 @@ namespace TinyBombe
             Recovered.Content = plain;
         }
 
+        #endregion
+
+        #region // Freerunning logic to step through all possibilities, stopping on candidate solutions
+
+        bool advanceWindow()
+        {
+
+            int index = Scrambler.FromWindowView(tbWindow.Text);
+            index = (index + 1) % 256;
+            tbWindow.Text = Scrambler.ToWindowView(index);
+            if (index == 0)
+            {
+                DateTime endCycle = DateTime.Now;
+                this.Title = $"Run time = {(endCycle - startCycle).TotalMilliseconds} msecs";
+                return true;
+            }
+            return false;
+        }
+
+        private bool isTestRegisterTriggered()
+        {
+            // VccSource is part of my test register, so we test where attaches
+            int hotCount = 0;
+            int testBus = VccAttachesAt / 8;
+            for (int wire = 0; wire < 8; wire++)
+            {
+                if (Joints.IsLive(busWires[testBus, wire]))
+                {
+                    hotCount++;
+                }
+            }
+            bool atStop = (hotCount == 1 || hotCount == 7);
+            return atStop;
+        }
+
+        DateTime startCycle;
+
+        private void btnRestart_Click(object sender, RoutedEventArgs e)
+        {
+            tbWindow.Text = "AAA";
+            startCycle = DateTime.Now;
+            isFreeRunning = true;
+            RebuildBombe();
+        }
+
+        private void btnResume_Click(object sender, RoutedEventArgs e)
+        {
+            // Kick the machine to the next position
+            advanceWindow();
+            isFreeRunning = true;
+            RebuildBombe();
+        }
+
+        private void btnPause_Click(object sender, RoutedEventArgs e)
+        {
+            isFreeRunning = false;
+        }
+
+        private void StepTimer_Tick(object? sender, EventArgs e)
+        {
+            int index = Scrambler.FromWindowView(tbWindow.Text);
+            index = (index + 1) % 256;
+            tbWindow.Text = Scrambler.ToWindowView(index);
+            if (index == 0)
+            {
+                DateTime endCycle = DateTime.Now;
+                this.Title = $"Run time = {(endCycle - startCycle).TotalMilliseconds} msecs";
+            }
+            RebuildBombe();
+        }
         #endregion
 
         #region Vcc Source Tag.  Put voltage on the tag, test Steckering hypothesis
@@ -480,7 +594,7 @@ namespace TinyBombe
                 string toolTip = $"{uppers[src]}.{lowers[dst]} {leftRightArrow} {uppers[dst]}.{lowers[src]} ";
                 Canvas theSwitch = makeSwitch(switchPos, y, isClosed, toolTip, wireName);
 
-                Brush bWire = isClosed ? Brushes.Blue : Brushes.Gray;
+                Brush bWire = Brushes.Blue;   // isClosed ? Brushes.Blue : Brushes.Gray;
 
                 // There is a cheat here.The vertical bus wires are extended or cut to exactly terminate at the crosswire channel.
                 busWires[src, dst].Y2 = y;
@@ -499,10 +613,12 @@ namespace TinyBombe
                 Canvas.SetTop(pRight, 0);
                 bombeCanvas.Children.Add(pRight);
                
-                if (isClosed)
-                {
+     
                     Joints.Join(busWires[src, dst], p);
                     Joints.Join(busWires[dst, src], pRight);
+
+                if (isClosed)
+                {
                     Joints.Join(p, pRight);
                 }
 
@@ -692,54 +808,5 @@ namespace TinyBombe
 
         #endregion
 
-        #region // Automatic timer stepping through all possibilities, stopping on candidate solutions
-
-
-        private void isTestRegisterTriggered()
-        {
-            // VccSource is part of my test register, so we test where attaches
-            int hotCount = 0;
-            int testBus = VccAttachesAt / 8;
-            for (int wire = 0; wire < 8; wire++)
-            {
-                if (Joints.IsLive(busWires[testBus, wire]))
-                {
-                    hotCount++;
-                }
-            }
-            if (hotCount ==1 || hotCount == 7)
-            {
-                stepTimer.IsEnabled = false;
-            }
-        }
-
-        private void btnRestart_Click(object sender, RoutedEventArgs e)
-        {
-            tbWindow.Text = "AAA";
-            stepTimer.IsEnabled = true;
-        }
-
-        private void btnResume_Click(object sender, RoutedEventArgs e)
-        {
-            stepTimer.IsEnabled = true;
-        }
-
-        private void btnStop_Click(object sender, RoutedEventArgs e)
-        {
-            stepTimer.IsEnabled = false;
-        }
-
-        private void StepTimer_Tick(object? sender, EventArgs e)
-        {
-            int index = Scrambler.FromWindowView(tbWindow.Text);
-            index = (index + 1) % 256;
-            tbWindow.Text = Scrambler.ToWindowView(index);
-            if (index == 0)
-            {
-                stepTimer.IsEnabled = false;
-            }
-            RebuildBombe();
-        }
-        #endregion
     }
 }
