@@ -66,20 +66,19 @@ namespace TinyBombe
         /// Make a random encrrypted message that contains a cribword somewhere near the beginning.
         /// </summary>
         /// <returns></returns>
-        public static string InterceptRandomEncryptedMessage()
+        public static string InterceptRandomEncryptedMessage(string cribword)
         {
             Random rnd = new Random();
             // EGGHEAD EGGED BEG BEGGED CAGED AGED GAFF
-            string[] cribbable = { "BEACHED" };
+            string[] cribbable = {  };
 
             string[] shortWord = {
-                    "BED", "BEE",  "ADD", "ADA",   "FED",   "DAD", "BAD", "A", "FEE", "EBB"};
+                   "A", "BE",  "BED", "BEE",  "ADD", "ADA",   "FED", "CAB",  "DAD", "BAD", "FAD",  "FEE", "EBB"};
             string[] scrabbleWord = {
-                  "BEAD",  "BEACHBABE", "BEACHEAD", "ABE", "ACED", "BABE", "FEED", "DEAD",  "FEED", "FACED", "DEADHEAD", "BEHEAD", "EACH", "DEED",  "BED", "BEE", 
-                  "ADD", "ADA",   "FED",   "DAD", "BAD", "A", "FEE", "EBB"};
-            // pick a cribword
-            string cribword = cribbable[rnd.Next(cribbable.Length)];
-            int cribPos = rnd.Next(3);
+                 "BEAD",  "BEACHBABE", "BEACHHEAD", "BEACHED", "ABE", "ACED", "BABE", "FEED", "DEAD", "DEAF", "DEADHEAD", "BEHEAD", "EACH", "DEED",  
+                  "FACED"  };
+
+            int cribPos = rnd.Next(3) + 1;
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 6; i++)
             {

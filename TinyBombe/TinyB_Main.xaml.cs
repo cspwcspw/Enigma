@@ -34,13 +34,13 @@ namespace TinyBombe
         const int WindowTopMargin = 70; // reserve area at top for menus, buttons, etc above the canvas.
         const int ColWidth = 140;
         const int RowHeight = 76;
-        const int WireChannelWidth = 7;
-        const int ScramblerSize = 8*WireChannelWidth;
+        const double WireChannelWidth = 7;
+        const double ScramblerSize = 8*WireChannelWidth;
         const double WireThickness = 1.0;
         const int LeftMargin = 30;
         
         // This margin is space on the canvas above the rows is used for layout/wiring of the diagonal board cross-connects.
-        const int DiagonalBoardHeight = 18 * WireChannelWidth;
+        const double DiagonalBoardHeight = 18 * WireChannelWidth;
         const int TopBusMargin = 30;
         const char leftRightArrow = '\u2194';  //https://www.fileformat.info/info/unicode/char/search.htm
 
@@ -120,9 +120,9 @@ namespace TinyBombe
              // ToDo
         }
 
-        int xFor(int bus, int wire)  // General helper for x layout
+        double xFor(int bus, int wire)  // General helper for x layout
         {
-            int x0 = bus * ColWidth + (wire + 1) * WireChannelWidth + LeftMargin;
+            double x0 = bus * ColWidth + (wire + 1) * WireChannelWidth + LeftMargin;
             return x0;
         }
 
@@ -209,7 +209,7 @@ namespace TinyBombe
             string crib = Crib.Text;
             if (crib.Length == 0)
             {
-                string msg = $"The crib cannot be empty (hint: ...BEACHED...)";
+                string msg = $"The crib cannot be empty (hint: ...BEHEADED...)";
                 MessageBox.Show(msg, "TinyBombe: Empty Crib");
                 return false;
             }
@@ -228,7 +228,7 @@ namespace TinyBombe
 
         private void normalizeCrib()
         {
-            string s = Crib.Text.ToUpper().Trim();
+            string s = Crib.Text.ToUpper();
             StringBuilder sb = new StringBuilder();
             foreach (char c in s)
             {
@@ -238,7 +238,7 @@ namespace TinyBombe
                 }
                 else
                 {
-                    sb.Append('?');
+                    sb.Append(' ');
                 }
             }
 
@@ -292,7 +292,7 @@ namespace TinyBombe
             if (index == 0)
             {
                 DateTime endCycle = DateTime.Now;
-                this.Title = $"Run time = {(endCycle - startCycle).TotalSeconds} secs";
+                this.Title = $"Run time = {(endCycle - startScanCycle).TotalSeconds} secs";
                 return true;
             }
             return false;
@@ -314,12 +314,12 @@ namespace TinyBombe
             return atStop;
         }
 
-        DateTime startCycle;
+        DateTime startScanCycle;
 
-        private void btnRestart_Click(object sender, RoutedEventArgs e)
+        private void btnScan_Click(object sender, RoutedEventArgs e)
         {
             tbWindow.Text = "AAA";
-            startCycle = DateTime.Now;
+            startScanCycle = DateTime.Now;
             isFreeRunning = true;
             RebuildBombe();
         }
@@ -345,7 +345,7 @@ namespace TinyBombe
             if (index == 0)
             {
                 DateTime endCycle = DateTime.Now;
-                this.Title = $"Run time = {(endCycle - startCycle).TotalMilliseconds} msecs";
+                this.Title = $"Run time = {(endCycle - startScanCycle).TotalMilliseconds} msecs";
             }
             RebuildBombe();
         }
@@ -425,7 +425,7 @@ namespace TinyBombe
             Placements places = new Placements();
             for (int i = 0; i < crib.Length; i++)
             {
-                if (crib[i] == '?')    // step over wildcard don't-cares im crib, 
+                if (crib[i] == ' ')    // step over wildcard don't-cares im crib, 
                 {
                     rows.Add(-1);
                 }
@@ -451,7 +451,7 @@ namespace TinyBombe
         {
             for (int i = 0; i < crib.Length; i++)
             {
-                if (crib[i] == '?') continue;  // ignore wildcard don't-cares in crib
+                if (crib[i] == ' ') continue;  // ignore wildcard don't-cares in crib
                 int leftBus = crib[i] - 'A';
                 int rightBus = cipher[i] - 'A';
                 if (leftBus > rightBus) // wrong way around?
@@ -623,7 +623,9 @@ namespace TinyBombe
                 }
             }
 
-            // Put a couple of quick-change buttons on the canvas:
+            double dbXMargin = 10;
+            double dbYPosn = botY - WireChannelWidth;
+            Canvas diagBoard = new Canvas() { Height = 18 * WireChannelWidth, Width = bombeCanvas.Width-2*dbXMargin, Background = Brushes.LightGray };
 
             foreach (string s in layout)
             {
@@ -632,13 +634,14 @@ namespace TinyBombe
                 int src = s[0] - 'A';
                 int dst = s[1] - 'A';
 
-                int chan = 15 - int.Parse(s.Substring(2));
-                int switchPos = xFor(src, 12);
+                double chan = 15 - double.Parse(s.Substring(2));
+                double switchPos = xFor(src, 12);
 
-                double x0 = xFor(src, dst);
-                double x4 = xFor(dst, src);
+                double x0 = xFor(src, dst) -dbXMargin;
+                double x4 = xFor(dst, src) - dbXMargin;
 
-                double y = botY + chan * WireChannelWidth;  // y coordinate of the channel
+                //    double y = botY + chan * WireChannelWidth;  // y coordinate of the channel
+                double y = (chan + 1.5) * WireChannelWidth;  // y coordinate of the channel
 
 
 
@@ -648,8 +651,8 @@ namespace TinyBombe
                 Brush bWire = Brushes.Blue;   // isClosed ? Brushes.Blue : Brushes.Gray;
 
                 // There is a cheat here.The vertical bus wires are extended or cut to exactly terminate at the crosswire channel.
-                busWires[src, dst].Y2 = y;
-                busWires[dst, src].Y2 = y;
+                busWires[src, dst].Y2 = y+dbYPosn;
+                busWires[dst, src].Y2 = y+dbYPosn;
 
 
                 double leftedge = Canvas.GetLeft(theSwitch);
@@ -657,27 +660,31 @@ namespace TinyBombe
                 Line p = new Line() { X1 = x0, X2 = leftedge, Y1 = y, Y2 = y, Stroke = bWire, StrokeThickness = WireThickness };
                 Canvas.SetLeft(p, 0);
                 Canvas.SetTop(p, 0);
-                bombeCanvas.Children.Add(p);
+                diagBoard.Children.Add(p);
 
                 Line pRight = new Line() { X1 = rightEdge, X2 = x4, Y1 = y, Y2 = y, Stroke = bWire, StrokeThickness = WireThickness };
                 Canvas.SetLeft(pRight, 0);
                 Canvas.SetTop(pRight, 0);
-                bombeCanvas.Children.Add(pRight);
-               
-     
-                    Joints.Join(busWires[src, dst], p);
-                    Joints.Join(busWires[dst, src], pRight);
+                diagBoard.Children.Add(pRight);
+
+
+                Joints.Join(busWires[src, dst], p);
+                Joints.Join(busWires[dst, src], pRight);
 
                 if (isClosed)
                 {
                     Joints.Join(p, pRight);
                 }
 
-                bombeCanvas.Children.Add(theSwitch); // Put it down last so it stays foremost.
+                diagBoard.Children.Add(theSwitch); // Put it down last so it stays foremost.
             }
+            Canvas.SetLeft(diagBoard,  dbXMargin);
+            Canvas.SetTop(diagBoard, dbYPosn);
+            bombeCanvas.Children.Insert(0, diagBoard);
+
         }
 
-        private Canvas makeSwitch(int x, double y, bool isClosed, string myToolTip, string wireName)
+        private Canvas makeSwitch(double x, double y, bool isClosed, string myToolTip, string wireName)
         {   double cWidth = 16;
             double cHeight = 6;
             double delta = isClosed ? cHeight : 2.5;
@@ -761,7 +768,7 @@ namespace TinyBombe
             {
                 for (int wire = 0; wire < 8; wire++)
                 {
-                    int x0 = xFor(bus, wire);
+                    double x0 = xFor(bus, wire);
                     Line p = new Line() { X1 = x0, X2 = x0, Y1 = topY, Y2 = botY, Stroke = Brushes.Blue, StrokeThickness = WireThickness };
 
                     busWires[bus, wire] = p;
@@ -835,8 +842,8 @@ namespace TinyBombe
 
         private void btnRandomPuzzle_Click(object sender, RoutedEventArgs e)
         {
-            Cipher.Text = Scrambler.InterceptRandomEncryptedMessage();
-            Crib.Text = "G";
+            Cipher.Text = Scrambler.InterceptRandomEncryptedMessage("BEHEADED");
+            Crib.Text = "BEHEADED";
             tbWindow.Text = "AAA";
             RebuildBombe();
         }
