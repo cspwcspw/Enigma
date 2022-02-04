@@ -1,0 +1,47 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "TestSuite/1.0.0": {
+        "dependencies": {
+          "TinyBombe": "1.0.0",
+          "Utils": "1.0.0"
+        },
+        "runtime": {
+          "TestSuite.dll": {}
+        }
+      },
+      "TinyBombe/1.0.0": {
+        "runtime": {
+          "TinyBombe.dll": {}
+        }
+      },
+      "Utils/1.0.0": {
+        "runtime": {
+          "Utils.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "TestSuite/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "TinyBombe/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Utils/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

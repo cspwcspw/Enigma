@@ -31,7 +31,7 @@ namespace TinyBombe
         // It is easier than pondering the deep conceptual stuff about why the Bombe worked and the
         // actual crypto issues.
 
-        const int WindowTopMargin = 50; // reserve area at top for menus, buttons, etc above the canvas.
+        const int WindowTopMargin = 70; // reserve area at top for menus, buttons, etc above the canvas.
         const int ColWidth = 140;
         const int RowHeight = 76;
         const int WireChannelWidth = 7;
@@ -59,9 +59,9 @@ namespace TinyBombe
         string uppers = "ABCDEFGH";
         string lowers = "abcdefgh";
 
-        int cribOffsetWithinIntercept = 0;
+           bool isFreeRunning = false;
 
-        bool isFreeRunning = false;
+  
 
         #endregion
 
@@ -81,17 +81,17 @@ namespace TinyBombe
             // BEACHHEADGEACHGBEACHGBABEGFEDGDADGBEAD->GBEECBGFHEAEAGADFFECBAHHFBGFGHEHHDCCHC at CAA
             // This test case on first five-letter crib should succeed at 128(CAA) and give a false stop at 110(BFG)
             // BEACH -> GBEEC  
-            Cipher.Text = "GBEECBGFHEAEAGADFFECBAHHFBGFGHEHHDCCHC";
-            Crib.Text = "??ACHHEAD";  
+           
+            Crib.Text = "??ACHHEAD";
             tbWindow.Text = "BFF";
 
-                bombeCanvas = new Canvas()
-                {
-                    Background = Brushes.PowderBlue,   
-                    Height = botY + 50,
-                    Width = ColWidth * 8 + LeftMargin - 3 * count
-                };
- 
+            bombeCanvas = new Canvas()
+            {
+                Background = Brushes.PowderBlue,
+                Height = botY + 50,
+                Width = ColWidth * 8 + LeftMargin - 3 * count
+            };
+
             theScroller = new ScrollViewer()
             {
                 Margin = new Thickness(0, WindowTopMargin, 0, 0),
@@ -101,10 +101,17 @@ namespace TinyBombe
             theScroller.Content = bombeCanvas;
             mainGrid.Children.Add(theScroller);
 
+            // Initial puzzle is hardwired
+            string fullPlainMessage = "BEACHHEADGAGBEACHGBABEGFEDGDADGEACHGBEAD";
+            string windowKey = "CAA";
+            Cipher.Text = getFullInterceptedMessage(windowKey, fullPlainMessage);
+
+
+
             RebuildBombe();
             // And first time only, change the Window size. 
             this.Height = botY + 140;
-             
+
         }
 
         private void AddSamplesToMenu()
@@ -123,6 +130,8 @@ namespace TinyBombe
         // when the rotors move is too messy. And the So I just rebuild the whole GUI from scratch on each step.
         void RebuildBombe()
         {
+           
+
             while (true)
             {
                 normalizeCrib();
@@ -176,10 +185,28 @@ namespace TinyBombe
             }
         }
 
+        private string getFullInterceptedMessage(string windowKey, string fullPlainMessage)
+        {
+            Scrambler sc = new Scrambler(0, 0, 0);
+            sc.Index = Scrambler.FromWindowView(windowKey);
+            string error = sc.SetPlugboard("AE GB");
+            if (!String.IsNullOrEmpty(error))
+            {
+                MessageBox.Show(error, "TinyBombe: Plugboard settings invalid.");
+            }
+            string cipherText = sc.EncryptText(fullPlainMessage);
+            return cipherText;
+        }
 
         private bool validateCrib()
         {
             string crib = Crib.Text;
+            if (crib.Length == 0)
+            {
+                string msg = $"The crib cannot be empty (hint: ...BEACHBED...)";
+                MessageBox.Show(msg, "TinyBombe: Empty Crib");
+                return false;
+            }
             string intercept = Cipher.Text;
             for (int i=0; i < crib.Length; i++)
             {
@@ -216,7 +243,6 @@ namespace TinyBombe
         {
             Scrambler sc = new Scrambler(0, 0, 0);
             sc.Index = Scrambler.FromWindowView(tbWindow.Text);
-            sc.Index = (sc.Index + 512 - cribOffsetWithinIntercept) % 512;
             string cp = Cipher.Text;
             string plain = sc.EncryptText(cp);
             if ((bool)cbReplaceSpaces.IsChecked)
@@ -224,6 +250,21 @@ namespace TinyBombe
                 plain = plain.Replace("G", " ");
             }
             Recovered.Content = plain;
+
+            // And do it again, this time with plugboard settings
+            sc.Index = Scrambler.FromWindowView(tbWindow.Text);
+            string error = sc.SetPlugboard(PlugGuesses.Text);
+            if (!string.IsNullOrEmpty(error))
+            {
+                MessageBox.Show(error, "TinyBombe: Plugboard settings invalid.");
+            }
+
+            plain = sc.EncryptText(cp);
+            if ((bool)cbReplaceSpaces.IsChecked)
+            {
+                plain = plain.Replace("G", " ");
+            }
+            RecoveredWithPlugs.Content = plain;
         }
 
         #endregion
@@ -234,12 +275,12 @@ namespace TinyBombe
         {
 
             int index = Scrambler.FromWindowView(tbWindow.Text);
-            index = (index + 1) % 256;
+            index = (index + 1) % 512;
             tbWindow.Text = Scrambler.ToWindowView(index);
             if (index == 0)
             {
                 DateTime endCycle = DateTime.Now;
-                this.Title = $"Run time = {(endCycle - startCycle).TotalMilliseconds} msecs";
+                this.Title = $"Run time = {(endCycle - startCycle).TotalSeconds} secs";
                 return true;
             }
             return false;
@@ -572,8 +613,6 @@ namespace TinyBombe
 
             // Put a couple of quick-change buttons on the canvas:
 
-
-
             foreach (string s in layout)
             {
                 string wireName = s.Substring(0, 2);
@@ -622,32 +661,6 @@ namespace TinyBombe
                     Joints.Join(p, pRight);
                 }
 
-
-                //if (isClosed)
-                //{
-                //    // There is a cheat here.The vertical bus wires are extended or cut to exactly terminate at the crosswire channel.
-                //    busWires[src, dst].Y2 = y;
-                //    busWires[dst, src].Y2 = y;
-
-
-                //    double leftedge = Canvas.GetLeft(theSwitch);
-                //    double rightEdge = leftedge + theSwitch.Width;
-                //    Line p = new Line() { X1 = x0, X2 = leftedge, Y1 = y, Y2 = y, Stroke = Brushes.Blue, StrokeThickness = WireThickness };
-                //    Canvas.SetLeft(p, 0);
-                //    Canvas.SetTop(p, 0);
-                //    bombeCanvas.Children.Add(p);
-                //    Joints.Join(busWires[src, dst], p);
-
-                //    Line pRight = new Line() { X1 = rightEdge, X2 = x4, Y1 = y, Y2 = y, Stroke = Brushes.Blue, StrokeThickness = WireThickness };
-                //    Canvas.SetLeft(pRight, 0);
-                //    Canvas.SetTop(pRight, 0);
-                //    bombeCanvas.Children.Add(pRight);
-                //    Joints.Join(busWires[dst, src], pRight);
-                //    if (isClosed)
-                //    {
-                //        Joints.Join(p, pRight);
-                //    }
-                //}
                 bombeCanvas.Children.Add(theSwitch); // Put it down last so it stays foremost.
             }
         }
@@ -728,7 +741,7 @@ namespace TinyBombe
 
         #endregion
 
-        #region Buses:   Build the bus wiring
+        #region Buses: Build the bus wiring
         void makeBuses()
         {
             int topY = DiagonalBoardMargin;
@@ -808,5 +821,21 @@ namespace TinyBombe
 
         #endregion
 
+        private void btnRandomPuzzle_Click(object sender, RoutedEventArgs e)
+        {
+            Cipher.Text = Scrambler.InterceptRandomEncryptedMessage();
+            Crib.Text = "";
+            tbWindow.Text = "AAA";
+            RebuildBombe();
+        }
+
+        private void PlugGuesses_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                RecoverMessage();
+            }
+
+        }
     }
 }

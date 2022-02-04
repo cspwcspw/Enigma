@@ -4,7 +4,6 @@ D:\GitHub\Enigma\TinyBombe\bin\Debug\net6.0-windows\TinyBombe.runtimeconfig.json
 D:\GitHub\Enigma\TinyBombe\bin\Debug\net6.0-windows\TinyBombe.dll
 D:\GitHub\Enigma\TinyBombe\bin\Debug\net6.0-windows\ref\TinyBombe.dll
 D:\GitHub\Enigma\TinyBombe\bin\Debug\net6.0-windows\TinyBombe.pdb
-D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\TinyBombe.csproj.AssemblyReference.cache
 D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\TinyB_Main.g.cs
 D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\App.g.cs
 D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\TinyBombe_MarkupCompile.cache
@@ -19,3 +18,4 @@ D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\TinyBombe.dll
 D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\ref\TinyBombe.dll
 D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\TinyBombe.pdb
 D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\TinyBombe.genruntimeconfig.cache
+D:\GitHub\Enigma\TinyBombe\obj\Debug\net6.0-windows\TinyBombe.csproj.AssemblyReference.cache

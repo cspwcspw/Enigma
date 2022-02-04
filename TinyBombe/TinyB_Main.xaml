@@ -15,14 +15,13 @@
         <Button x:Name="btnBack" Content="-" HorizontalAlignment="Left" Margin="349,3,0,0" VerticalAlignment="Top"   Width="20" Height="21" Click="btnBack_Click"/>
         <Button x:Name="btnFwd" Content="+" HorizontalAlignment="Left" Margin="413,3,0,0" VerticalAlignment="Top"  Width="20" Height="21" Click="btnFwd_Click"/>
 
-
         <TextBox x:Name="Crib" HorizontalAlignment="Left" Height="19" Text ="BEACH"  CharacterCasing="Upper"  Margin="521,20,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="315" FontFamily="Consolas" FontWeight="Bold" FontSize="14" KeyDown="Crib_KeyDown"/>
         <TextBox x:Name="Cipher" HorizontalAlignment="Left" Height="20"  Text="GBEECBGFH" CharacterCasing="Upper" VerticalAlignment="Top" Width="315" Margin="521,0,0,0"   FontFamily="Consolas" FontWeight="Bold" FontSize="14" KeyDown="Cipher_KeyDown"/>
         <Label  Content="Crib:" HorizontalAlignment="Left" Margin="488,21,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
         <Label  Content="Intercepted:" HorizontalAlignment="Left" Margin="451,1,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
-        <Label  Content="Decoded:" HorizontalAlignment="Left" Margin="853,2,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
+        <Label  Content="Decoded (no plugs):" HorizontalAlignment="Left" Margin="853,2,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
         <Label  x:Name="Recovered" Content="Hello, World!" HorizontalAlignment="Left" Margin="853,22,0,0" Padding="0"    VerticalAlignment="Top" Height="18" FontFamily="Consolas" FontWeight="Bold" FontSize="14"/>
-        <CheckBox x:Name="cbReplaceSpaces" Content="Replace 'G's by spaces" HorizontalAlignment="Left" Margin="930,3,0,0" VerticalAlignment="Top" IsChecked="True" Click="cbReplaceSpaces_Click"/>
+        <CheckBox x:Name="cbReplaceSpaces" Content="Replace 'G's by spaces" HorizontalAlignment="Left" Margin="990,3,0,0" VerticalAlignment="Top" IsChecked="True" Click="cbReplaceSpaces_Click" Width="141"/>
         <CheckBox x:Name="cbUseDiagonalBoard" Content="Use Welchman's Diagonal Board" HorizontalAlignment="Left" Margin="6,3,0,0" VerticalAlignment="Top" IsChecked="True" Click="cbUseDiagonalBoard_Click"/>
         <Button x:Name="btnCloseAll" Content="Close all"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="8,22,0,0" VerticalAlignment="Top" Width="56" Click="btnCloseAll_Click"/>
         <Button x:Name="btnOpenAll" Content="Open all"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="72,22,0,0" VerticalAlignment="Top" Width="58" Click="btnOpenAll_Click"/>
@@ -33,7 +32,11 @@
         <Button x:Name="btnPause" Content="Pause"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="420,30,0,0" VerticalAlignment="Top" Width="56" Click="btnPause_Click"  />
         <Label x:Name="dbgLabel" Content="Label" HorizontalAlignment="Left" Height="29" Margin="217,26,0,0" VerticalAlignment="Top" Width="56"/>
 
+        <Label  Content="Guess plugs:" HorizontalAlignment="Left" Margin="682,42,0,0" Padding="0"    VerticalAlignment="Top" Height="20" />
+        <Label  x:Name="RecoveredWithPlugs"  Content="Hello, World!" HorizontalAlignment="Left" Margin="853,43,0,0" Padding="0"    VerticalAlignment="Top" Height="18" FontFamily="Consolas" FontWeight="Bold" FontSize="14"/>
+        <TextBox x:Name="PlugGuesses" HorizontalAlignment="Left" Height="19" Text =""  CharacterCasing="Upper"  Margin="763,43,0,0"   VerticalAlignment="Top" Width="73" FontFamily="Consolas" FontWeight="Bold" FontSize="14" KeyDown="PlugGuesses_KeyDown"  />
 
+        <Button x:Name="btnRandomPuzzle" Content="Random puzzle"  Padding="0"  HorizontalAlignment="Left" Height="19" Margin="516,43,0,0" VerticalAlignment="Top" Width="96" Click="btnRandomPuzzle_Click"  />
 
 
     </Grid>

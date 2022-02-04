@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Text;
 
 // Pete, Jan 2022
@@ -14,6 +15,9 @@ namespace TinyBombe
         public int Index { get; set; }  // an integer representing the scrambler's present position
         public int StepOffsetInMenu { get; private set; }
 
+        string plugboardMap = "ABCDEFGH";
+ 
+
         public int LeftBus { get; private set; }  // just a place to keep some info for the GUI
         public int RightBus { get; private set; }
         public object? Tag { get; set; }        // Keep a reference to the UIElement/Canvas when used with a WPF GUI
@@ -26,6 +30,69 @@ namespace TinyBombe
             Tag = tag;
         }
 
+        /// <summary>
+        ///  Create a new encryptor with random whell settings and plugboard plugs
+        /// </summary>
+        /// <returns></returns>
+        private static Scrambler MakeRandomlySetupScrambler()
+        {
+            Random rnd = new Random(42);
+            Scrambler result = new Scrambler(0, 0, 0);
+            result.Index = rnd.Next(128);
+            char[] map = "ABCDEFGH".ToCharArray();
+            for (int i = 0; i < 6; i++)   // Perform some random letter swaps
+            {
+                int k = rnd.Next(8);
+                int m = rnd.Next(8);
+                char tmp = map[k];
+                map[k] = map[m];
+                map[m] = tmp;
+            }
+            result.plugboardMap = new string(map);
+            return result;
+        }
+
+        /// <summary>
+        /// Make a random encrrypted message that contains a cribword somewhere near the beginning.
+        /// </summary>
+        /// <returns></returns>
+        public static string InterceptRandomEncryptedMessage()
+        {
+            Random rnd = new Random(42);
+            // EGGHEAD EGGED BEG BEGGED CAGED AGED GAFF
+            string[] cribbable = { "BEACHBED" };
+
+            string[] shortWord = {
+                    "BED", "BEE",  "ADD", "ADA",   "FED",   "DAD", "BAD", "A", "FEE", "EBB"};
+            string[] scrabbleWord = {
+                  "BEAD",  "BEACHBABE", "BEACHEAD", "ABE", "ACED", "BABE", "FEED", "DEAD",  "FEED", "FACED", "DEADHEAD", "BEHEAD", "EACH", "DEED",  "BED", "BEE", 
+                  "ADD", "ADA",   "FED",   "DAD", "BAD", "A", "FEE", "EBB"};
+            // pick a cribword
+            string cribword = cribbable[rnd.Next(cribbable.Length)];
+            int cribPos = rnd.Next(3);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 6; i++)
+            {
+                if (i == cribPos)
+                {
+                    sb.Append(cribword);
+                }
+                else if (i < cribPos)
+                {
+                    sb.Append(shortWord[rnd.Next(shortWord.Length)]);
+                }
+                else 
+                {
+                    sb.Append(scrabbleWord[rnd.Next(scrabbleWord.Length)]);
+                }
+                sb.Append('G');
+            }
+            string plainText = sb.ToString();
+            Scrambler sc = MakeRandomlySetupScrambler();
+            string cipherText = sc.EncryptText(plainText);
+            return cipherText;
+        }
+
         // The Core in-out wiring map is exposed via indexing
         public string this[int index]
         {
@@ -34,14 +101,42 @@ namespace TinyBombe
                 return theMap[index % mapSz];
             }
         }
+        /// <summary>
+        /// Returns and empty string if successful, or an error message.
+        /// </summary>
+        /// <param name="plugs"></param>
+        /// <returns></returns>
+        public string SetPlugboard(string plugs)
+        {
+            char[] newMap = "ABCDEFGH".ToCharArray();
+            string[] parts = plugs.ToUpper().Trim().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string part in parts) {
+                int c1 = part[0] - 'A';
+                int c2 = part[1] - 'A';
+                if (c1 < 0 || c1 >= 8 || c2 < 0 || c2 >= 8)
+                {
+                    plugboardMap = "ABCDEFGH";
+                    return "Plugboard invalid, ignored.  Working with no plugs inserted";
+                }
+                char temp = newMap[c1];
+                newMap[c1] = newMap[c2];
+                newMap[c2] = temp;
+            }
+
+            plugboardMap = new string(newMap);
+            return ""; // success
+        }
 
         public string EncryptText(string plainText)
         {
             StringBuilder sb = new StringBuilder();
             foreach (char c in plainText)
             {
-                int k = c - 'A';
-                sb.Append(this[Index][k]);
+                int prePlug = c - 'A';
+                int k = plugboardMap[prePlug] - 'A';
+                int preCrypt = this[Index][k] - 'A';
+                char postPlugCrypted = plugboardMap[preCrypt];
+                sb.Append(postPlugCrypted);
                 Index = (Index + 1) % 512;  // OK, so this machine steps after the encoding, not before.
             }
             return sb.ToString();
@@ -166,6 +261,7 @@ namespace TinyBombe
 "BAGFHDCE", "CFAEDBHG", "EFGHABCD", "DHGAFECB", "CGAFHDBE", "DFEACBHG", "EDGBAHCF", "BADCGHEF",
 "GCBFHDAE", "FGDCHABE", "DFGAHBCE", "HFGEDBCA", "GDFBHCAE", "CGAHFEBD", "HGEFCDBA", "HEFGBCDA",
             };
+
 
     }
 

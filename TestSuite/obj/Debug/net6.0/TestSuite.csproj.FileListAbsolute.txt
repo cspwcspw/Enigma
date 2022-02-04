@@ -1,0 +1,5 @@
+D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\TestSuite.csproj.AssemblyReference.cache
+D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\TestSuite.GeneratedMSBuildEditorConfig.editorconfig
+D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\TestSuite.AssemblyInfoInputs.cache
+D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\TestSuite.AssemblyInfo.cs
+D:\GitHub\Enigma\TestSuite\obj\Debug\net6.0\TestSuite.csproj.CoreCompileInputs.cache

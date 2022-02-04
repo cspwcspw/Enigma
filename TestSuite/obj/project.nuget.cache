@@ -1,18 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "nAF0NkYJIwVRg+8C83SURk0XaUfHy1OYFxyuMWjySN6HzdNjPSSiupxQ9gYi0jtFPQMjS209Hoke0wIQy6FZxg==",
-  "success": false,
+  "dgSpecHash": "9uBHGeq8G6ixoOnjHuiaJUB3K5DxGAS/uQuwMeUjCedw2t2aY50MKnNuW/z8n8+1HFL11+lcENJ4ecymBekbWQ==",
+  "success": true,
   "projectFilePath": "D:\\GitHub\\Enigma\\TestSuite\\TestSuite.csproj",
   "expectedPackageFiles": [],
-  "logs": [
-    {
-      "code": "NU1201",
-      "level": "Error",
-      "message": "Project TinyBombe is not compatible with net6.0 (.NETCoreApp,Version=v6.0). Project TinyBombe supports: net6.0-windows7.0 (.NETCoreApp,Version=v6.0)",
-      "libraryId": "TinyBombe",
-      "targetGraphs": [
-        "net6.0"
-      ]
-    }
-  ]
+  "logs": []
 }
