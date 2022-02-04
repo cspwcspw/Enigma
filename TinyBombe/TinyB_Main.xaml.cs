@@ -40,7 +40,8 @@ namespace TinyBombe
         const int LeftMargin = 30;
         
         // This margin is space on the canvas above the rows is used for layout/wiring of the diagonal board cross-connects.
-        const int DiagonalBoardMargin = 18 * WireChannelWidth;
+        const int DiagonalBoardHeight = 18 * WireChannelWidth;
+        const int TopBusMargin = 30;
         const char leftRightArrow = '\u2194';  //https://www.fileformat.info/info/unicode/char/search.htm
 
         List<Scrambler> Scramblers =  new List<Scrambler>();
@@ -89,7 +90,7 @@ namespace TinyBombe
             {
                 Background = Brushes.PowderBlue,
                 Height = botY + 50,
-                Width = ColWidth * 8 + LeftMargin - 3 * count
+                Width = ColWidth * 8 + LeftMargin
             };
 
             theScroller = new ScrollViewer()
@@ -125,7 +126,6 @@ namespace TinyBombe
             return x0;
         }
 
-        int count = 0;
         // Trying to untangle connections, make new cross-connects in the scrambers, etc.
         // when the rotors move is too messy. And the So I just rebuild the whole GUI from scratch on each step.
         void RebuildBombe()
@@ -139,16 +139,13 @@ namespace TinyBombe
 
                 List<int> scramblerRows = getScramblerRowsNeeded(Crib.Text, Cipher.Text);
                 int maxRow = scramblerRows.Max();
-                botY = DiagonalBoardMargin + (maxRow + 1) * RowHeight;
+                botY = TopBusMargin + maxRow * RowHeight + 120;
 
-                bombeCanvas.Height = botY + 30;
+                bombeCanvas.Height = botY + DiagonalBoardHeight;
 
                 Scramblers.Clear();
                 Joints.Clear();
                 bombeCanvas.Children.Clear();
-
-                count++;
-                dbgLabel.Content = $" {mainGrid.Children.Count} ";
 
                 busWires = new Line[8, 8];
 
@@ -160,13 +157,12 @@ namespace TinyBombe
                 }
                 addScramblers(Crib.Text, Cipher.Text, scramblerRows);
                 addVoltageSource();
-                RecoverMessage();
                 bool atStop = isTestRegisterTriggered();
                 if (atStop)
                 {
-                    Label stop = new Label() { Content = "Stop!", ToolTip = "This is a candidate - Send it for futher manual analysis.", Foreground = Brushes.Black, FontSize = 28, FontWeight = FontWeights.Bold, Background = Brushes.Magenta };
-                    Canvas.SetTop(stop, 5);
-                    Canvas.SetLeft(stop, xFor(7, 5));
+                    Label stop = new Label() { Content = "Stop!", ToolTip = "This is a candidate - Send it for futher manual analysis.", Foreground = Brushes.Black, FontSize = 20, FontWeight = FontWeights.Bold, Background = Brushes.Magenta };
+                    Canvas.SetTop(stop, 30);
+                    Canvas.SetLeft(stop, xFor(7, 8));
                     bombeCanvas.Children.Add(stop);
                     isFreeRunning = false;
                 }
@@ -178,11 +174,21 @@ namespace TinyBombe
                 // we demand execution of some (empty) code at an even-lower-priority-than-display-updating.
                 // In old Windows Forms this was called DoEvents();
                 Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new Action(delegate { }));
-
-
+  
                 bool endOfRun = advanceWindow();
-                if (endOfRun) break;
+                if (endOfRun)
+                {
+
+                    Label endRun = new Label() { Content = "End", Foreground = Brushes.Black, FontSize = 20, FontWeight = FontWeights.Bold, Background = Brushes.Yellow};
+                    Canvas.SetTop(endRun, 30);
+                    Canvas.SetLeft(endRun, xFor(7, 8));
+                    bombeCanvas.Children.Add(endRun);
+                    isFreeRunning = false;
+                    break;
+                }
+               
             }
+            RecoverMessage();
         }
 
         private string getFullInterceptedMessage(string windowKey, string fullPlainMessage)
@@ -203,7 +209,7 @@ namespace TinyBombe
             string crib = Crib.Text;
             if (crib.Length == 0)
             {
-                string msg = $"The crib cannot be empty (hint: ...BEACHBED...)";
+                string msg = $"The crib cannot be empty (hint: ...BEACHED...)";
                 MessageBox.Show(msg, "TinyBombe: Empty Crib");
                 return false;
             }
@@ -271,10 +277,16 @@ namespace TinyBombe
 
         #region // Freerunning logic to step through all possibilities, stopping on candidate solutions
 
+        int lastTime = 42;
         bool advanceWindow()
         {
-
+          
             int index = Scrambler.FromWindowView(tbWindow.Text);
+            if (index == lastTime)
+            {
+                MessageBox.Show("Index has not advanced.");
+            }
+            lastTime = index;
             index = (index + 1) % 512;
             tbWindow.Text = Scrambler.ToWindowView(index);
             if (index == 0)
@@ -343,7 +355,7 @@ namespace TinyBombe
         private void addVoltageSource()
         {
             // Add the VCC source
-            PointCollection pc = new PointCollection() { new Point(0, 0), new Point(-10, 20), new Point(0, 14), new Point(10, 20), new Point(0, 0) };
+            PointCollection pc = new PointCollection() { new Point(0, 0), new Point(-10, -20), new Point(0, -14), new Point(10, -20), new Point(0, 0) };
             Polygon VccTag = new Polygon() { Points = pc, Fill = Brushes.Blue, Stroke = Brushes.Blue };
             VccTag.MouseUp += VccTag_MouseUp;
             int attachedBus = VccAttachesAt / 8;
@@ -352,7 +364,7 @@ namespace TinyBombe
             string tip = $"Tests the hypothesis that {uppers[attachedBus]} is steckered to {uppers[attachedWire]}. If so, no other wire in this bus can light up.";
             VccTag.ToolTip = tip;
             Canvas.SetLeft(VccTag, xFor(attachedBus, attachedWire));
-            Canvas.SetTop(VccTag, botY);
+            Canvas.SetTop(VccTag, TopBusMargin);
 
             bombeCanvas.Children.Add(VccTag);
             Joints.Join(VccTag, busWires[attachedBus, attachedWire]);
@@ -466,7 +478,7 @@ namespace TinyBombe
             double xMid = (xFor(posCol, 7) + xFor(posCol + 1, 0)) / 2; // middle of channel
             double x0 = xMid - scramblerCanvas.Width / 2;
             Canvas.SetLeft(scramblerCanvas, x0);
-            double y0 = row * RowHeight + DiagonalBoardMargin + 2 * WireChannelWidth;
+            double y0 = row * RowHeight + TopBusMargin + 5 * WireChannelWidth;
             Canvas.SetTop(scramblerCanvas, y0);
             bombeCanvas.Children.Add(scramblerCanvas);
 
@@ -620,13 +632,13 @@ namespace TinyBombe
                 int src = s[0] - 'A';
                 int dst = s[1] - 'A';
 
-                int chan = int.Parse(s.Substring(2));
+                int chan = 15 - int.Parse(s.Substring(2));
                 int switchPos = xFor(src, 12);
 
                 double x0 = xFor(src, dst);
                 double x4 = xFor(dst, src);
 
-                double y = (chan + 2) * WireChannelWidth;  // y coordinate of the channel
+                double y = botY + chan * WireChannelWidth;  // y coordinate of the channel
 
 
 
@@ -744,13 +756,13 @@ namespace TinyBombe
         #region Buses: Build the bus wiring
         void makeBuses()
         {
-            int topY = DiagonalBoardMargin;
+            int topY = TopBusMargin;
             for (int bus = 0; bus < 8; bus++)
             {
                 for (int wire = 0; wire < 8; wire++)
                 {
                     int x0 = xFor(bus, wire);
-                    Line p = new Line() { X1 = x0, X2 = x0, Y1 = botY, Y2 = topY, Stroke = Brushes.Blue, StrokeThickness = WireThickness };
+                    Line p = new Line() { X1 = x0, X2 = x0, Y1 = topY, Y2 = botY, Stroke = Brushes.Blue, StrokeThickness = WireThickness };
 
                     busWires[bus, wire] = p;
                     Canvas.SetLeft(p, 0);
@@ -758,15 +770,15 @@ namespace TinyBombe
                     bombeCanvas.Children.Add(p);
                 }
 
-                // Labels near the bottom of each bus
+                // Labels near top of each bus
                 Label name = new Label() { Foreground = Brushes.Black, Content = (char)('A' + bus), FontFamily = new FontFamily("Consolas"), FontSize = 20, FontWeight = FontWeights.Bold };
                 Canvas.SetLeft(name, xFor(bus, -3));
-                Canvas.SetTop(name, botY -14);
+                Canvas.SetTop(name, topY-28);
                 bombeCanvas.Children.Add(name);
 
                 Label minorNames = new Label() { Foreground = Brushes.Black, Content = "abcdefgh", FontFamily = new FontFamily("Consolas"), FontSize =13, FontWeight = FontWeights.Bold };
                 Canvas.SetLeft(minorNames, xFor(bus, -1) -2);
-                Canvas.SetTop(minorNames, botY - 7);
+                Canvas.SetTop(minorNames, topY - 22);
                 bombeCanvas.Children.Add(minorNames);
             }
         }
@@ -824,7 +836,7 @@ namespace TinyBombe
         private void btnRandomPuzzle_Click(object sender, RoutedEventArgs e)
         {
             Cipher.Text = Scrambler.InterceptRandomEncryptedMessage();
-            Crib.Text = "";
+            Crib.Text = "G";
             tbWindow.Text = "AAA";
             RebuildBombe();
         }

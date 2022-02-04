@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 // Pete, Jan 2022
@@ -36,17 +37,26 @@ namespace TinyBombe
         /// <returns></returns>
         private static Scrambler MakeRandomlySetupScrambler()
         {
-            Random rnd = new Random(42);
+            Random rnd = new Random();
             Scrambler result = new Scrambler(0, 0, 0);
             result.Index = rnd.Next(128);
             char[] map = "ABCDEFGH".ToCharArray();
-            for (int i = 0; i < 6; i++)   // Perform some random letter swaps
+            List<int> indexes = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 7 };
+            int numPlugs = rnd.Next(4) + 1;
+            for (int i = 0; i < numPlugs; i++)
             {
-                int k = rnd.Next(8);
-                int m = rnd.Next(8);
-                char tmp = map[k];
-                map[k] = map[m];
-                map[m] = tmp;
+                int k = rnd.Next(indexes.Count);
+                int a = indexes[k];
+                indexes.RemoveAt(k);
+
+                int m = rnd.Next(indexes.Count);
+                int b = indexes[m];
+                indexes.RemoveAt(m);
+
+                // swap a and b in the map
+                char tmp = map[a];
+                map[a] = map[b];
+                map[b] = tmp;
             }
             result.plugboardMap = new string(map);
             return result;
@@ -58,9 +68,9 @@ namespace TinyBombe
         /// <returns></returns>
         public static string InterceptRandomEncryptedMessage()
         {
-            Random rnd = new Random(42);
+            Random rnd = new Random();
             // EGGHEAD EGGED BEG BEGGED CAGED AGED GAFF
-            string[] cribbable = { "BEACHBED" };
+            string[] cribbable = { "BEACHED" };
 
             string[] shortWord = {
                     "BED", "BEE",  "ADD", "ADA",   "FED",   "DAD", "BAD", "A", "FEE", "EBB"};
