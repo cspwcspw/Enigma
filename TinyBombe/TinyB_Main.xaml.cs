@@ -31,7 +31,7 @@ namespace TinyBombe
         // It is easier than pondering the deep conceptual stuff about why the Bombe worked and the
         // actual crypto issues.
 
-        const int WindowTopMargin = 70; // reserve area at top for menus, buttons, etc above the canvas.
+        const int WindowTopMargin = 160; // reserve area at top for menus, buttons, etc above the canvas.
         const int ColWidth = 140;
         const int RowHeight = 76;
         const double WireChannelWidth = 7;
@@ -60,7 +60,10 @@ namespace TinyBombe
         string uppers = "ABCDEFGH";
         string lowers = "abcdefgh";
 
-           bool isFreeRunning = false;
+        CipherCribBlocks bCipher;
+        CipherCribBlocks bCrib;
+
+        bool isFreeRunning = false;
 
   
 
@@ -83,7 +86,8 @@ namespace TinyBombe
             // This test case on first five-letter crib should succeed at 128(CAA) and give a false stop at 110(BFG)
             // BEACH -> GBEEC  
            
-            Crib.Text = "??ACHHEAD";
+           // Crib.Text = "??ACHHEAD";
+     
             tbWindow.Text = "BFF";
 
             bombeCanvas = new Canvas()
@@ -102,18 +106,26 @@ namespace TinyBombe
             theScroller.Content = bombeCanvas;
             mainGrid.Children.Add(theScroller);
 
+
+            bCipher = new CipherCribBlocks(64);
+            bCipher.Margin = new Thickness(70, 70, 0, 0);
+            mainGrid.Children.Add(bCipher);
+
+            bCrib = new CipherCribBlocks(64);
+            bCrib.Margin = new Thickness(70, 70+bCipher.Height, 0, 0);
+            mainGrid.Children.Add(bCrib);
+
+            bCrib.Text = "??ACHHEAD";
             // Initial puzzle is hardwired
             string fullPlainMessage = "BEACHHEADGAGBEACHGBABEGFEDGDADGEACHGBEAD";
             string windowKey = "CAA";
-            Cipher.Text = getFullInterceptedMessage(windowKey, fullPlainMessage);
-
-
-
+            bCipher.Text = getFullInterceptedMessage(windowKey, fullPlainMessage);
             RebuildBombe();
             // And first time only, change the Window size. 
             this.Height = botY + 140;
-
         }
+
+       
 
         private void AddSamplesToMenu()
         {
@@ -137,7 +149,8 @@ namespace TinyBombe
                 normalizeCrib();
                 if (!validateCrib()) return;
 
-                List<int> scramblerRows = getScramblerRowsNeeded(Crib.Text, Cipher.Text);
+             //   List<int> scramblerRows = getScramblerRowsNeeded(Crib.Text, Cipher.Text);
+                List<int> scramblerRows = getScramblerRowsNeeded(bCrib.Text, bCipher.Text);
                 int maxRow = scramblerRows.Max();
                 botY = TopBusMargin + maxRow * RowHeight + 120;
 
@@ -151,11 +164,11 @@ namespace TinyBombe
 
                 makeBuses();
 
-                if ((bool)cbUseDiagonalBoard.IsChecked)
-                {
+            //    if ((bool)cbUseDiagonalBoard.IsChecked)
+           //     {
                     makeDiagonalBoard();
-                }
-                addScramblers(Crib.Text, Cipher.Text, scramblerRows);
+            //    }
+                addScramblers(bCrib.Text, bCipher.Text, scramblerRows);
                 addVoltageSource();
                 bool atStop = isTestRegisterTriggered();
                 if (atStop)
@@ -206,14 +219,14 @@ namespace TinyBombe
 
         private bool validateCrib()
         {
-            string crib = Crib.Text;
+            string crib =bCrib.Text;
             if (crib.Length == 0)
             {
                 string msg = $"The crib cannot be empty (hint: ...BEHEADED...)";
                 MessageBox.Show(msg, "TinyBombe: Empty Crib");
                 return false;
             }
-            string intercept = Cipher.Text;
+            string intercept = bCipher.Text;
             for (int i=0; i < crib.Length; i++)
             {
                 if (crib[i] != '?' && crib[i]==intercept[i])
@@ -228,7 +241,7 @@ namespace TinyBombe
 
         private void normalizeCrib()
         {
-            string s = Crib.Text.ToUpper();
+            string s = bCrib.Text.ToUpper();
             StringBuilder sb = new StringBuilder();
             foreach (char c in s)
             {
@@ -242,14 +255,14 @@ namespace TinyBombe
                 }
             }
 
-            Crib.Text = sb.ToString();
+            bCrib.Text = sb.ToString();
         }
 
         private void RecoverMessage()
         {
             Scrambler sc = new Scrambler(0, 0, 0);
             sc.Index = Scrambler.FromWindowView(tbWindow.Text);
-            string cp = Cipher.Text;
+            string cp = bCipher.Text;
             string plain = sc.EncryptText(cp);
             if ((bool)cbReplaceSpaces.IsChecked)
             {
@@ -842,8 +855,8 @@ namespace TinyBombe
 
         private void btnRandomPuzzle_Click(object sender, RoutedEventArgs e)
         {
-            Cipher.Text = Scrambler.InterceptRandomEncryptedMessage("BEHEADED");
-            Crib.Text = "BEHEADED";
+            bCipher.Text = Scrambler.InterceptRandomEncryptedMessage("BEHEADED");
+            bCrib.Text = "BEHEADED";
             tbWindow.Text = "AAA";
             RebuildBombe();
         }
@@ -855,6 +868,17 @@ namespace TinyBombe
                 RecoverMessage();
             }
 
+        }
+
+        private void button_Click(object sender, RoutedEventArgs e)
+        {
+         
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            bCrib.DealWithKeypress(sender, e);
+            e.Handled = true;
         }
     }
 }
