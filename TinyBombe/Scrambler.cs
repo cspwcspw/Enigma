@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-// Pete, Jan 2022
+// Pete, Jan/Feb 2022
 
 namespace TinyBombe
 {
@@ -16,7 +16,7 @@ namespace TinyBombe
         public int Index { get; set; }  // an integer representing the scrambler's present position
         public int StepOffsetInMenu { get; private set; }
 
-        string plugboardMap = "ABCDEFGH";
+        public string plugboardMap { get; private set; } = "ABCDEFGH";
  
 
         public int LeftBus { get; private set; }  // just a place to keep some info for the GUI
@@ -35,7 +35,7 @@ namespace TinyBombe
         ///  Create a new encryptor with random whell settings and plugboard plugs
         /// </summary>
         /// <returns></returns>
-        private static Scrambler MakeRandomlySetupScrambler()
+        public static Scrambler MakeRandomlySetupScrambler()
         {
             Random rnd = new Random();
             Scrambler result = new Scrambler(0, 0, 0);
@@ -66,21 +66,22 @@ namespace TinyBombe
         /// Make a random encrrypted message that contains a cribword somewhere near the beginning.
         /// </summary>
         /// <returns></returns>
-        public static string InterceptRandomEncryptedMessage(string cribword)
+        public static string MakeRandomMessage(string cribword)
         {
             Random rnd = new Random();
             // EGGHEAD EGGED BEG BEGGED CAGED AGED GAFF
             string[] cribbable = {  };
 
             string[] shortWord = {
-                   "A", "BE",  "BED", "BEE",  "ADD", "ADA",   "FED", "CAB",  "DAD", "BAD", "FAD",  "FEE", "EBB"};
+                   "A", "BE",  "BED", "BEE",  "ADD", "ADA", "FAB",  "FED", "CAB",  "DAD", "BAD", "FAD",  "FEE", "EBB"};
             string[] scrabbleWord = {
                  "BEAD",  "BEACHBABE", "BEACHHEAD", "BEACHED", "ABE", "ACED", "BABE", "FEED", "DEAD", "DEAF", "DEADHEAD", "BEHEAD", "EACH", "DEED",  
                   "FACED"  };
 
             int cribPos = rnd.Next(3) + 1;
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 6; i++)
+            int numWords = 6;
+            for (int i = 0; i < numWords; i++)
             {
                 if (i == cribPos)
                 {
@@ -94,12 +95,14 @@ namespace TinyBombe
                 {
                     sb.Append(scrabbleWord[rnd.Next(scrabbleWord.Length)]);
                 }
-                sb.Append('G');
+                if (i < numWords - 1)
+                {
+                    sb.Append('G');   // we use this as a space 
+                }
             }
+        
             string plainText = sb.ToString();
-            Scrambler sc = MakeRandomlySetupScrambler();
-            string cipherText = sc.EncryptText(plainText);
-            return cipherText;
+            return plainText;
         }
 
         // The Core in-out wiring map is exposed via indexing

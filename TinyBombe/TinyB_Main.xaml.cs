@@ -16,6 +16,10 @@ using System.Windows.Threading;
 
 // In particular, the tiny Bombe here only has an 8-symbol alphabet.  In my case, three 8-wire rotors and a reflector,
 // and all scramblers are "hardwired" to always use the same mapping at each of their 512 rotor positions AAA - HHH.
+//
+// There is a little "game" built in: you can generate a random intercepted ciphertext message with with a known crib
+// in it somewhere, and try to find the crib - wheel positions and plugboard settings.
+// Or you can see what happens if you weaken or strenghten the crib, or forego the use of Welchman's diagonal board.  
 
 namespace TinyBombe
 {
@@ -31,7 +35,7 @@ namespace TinyBombe
         // It is easier than pondering the deep conceptual stuff about why the Bombe worked and the
         // actual crypto issues.
 
-        const int WindowTopMargin = 160; // reserve area at top for menus, buttons, etc above the canvas.
+        const int WindowTopMargin = 100; // reserve area at top for menus, buttons, etc above the canvas.
         const int ColWidth = 140;
         const int RowHeight = 76;
         const double WireChannelWidth = 7;
@@ -60,12 +64,12 @@ namespace TinyBombe
         string uppers = "ABCDEFGH";
         string lowers = "abcdefgh";
 
-        CipherCribBlocks bCipher;
-        CipherCribBlocks bCrib;
+        string hintText = "No hints available";
+  
 
         bool isFreeRunning = false;
 
-  
+        CipherCribControl cc;
 
         #endregion
 
@@ -74,30 +78,18 @@ namespace TinyBombe
         {
             InitializeComponent();
 
-            AddSamplesToMenu();
+            AddSamplesToMenu(); // Oops, there are none yet
 
             Joints = new Connections(HotBrush);
 
-            // BEAD ACE BEACH BABE FED DEAD DAD BAD FEED EGGHEAD EGGED BEG BEGGED CAGED AGED FACED
-            // DEADHEAD BEHEAD EACH DEED FEE EGGHEAD GAFF
-
-            // BEACHHEADGEACHGBEACHGBABEGFEDGDADGBEAD->GBEECECBCCCBECCGBHFGCFBHGCGGGCBCCHADBG at BFG
-            // BEACHHEADGEACHGBEACHGBABEGFEDGDADGBEAD->GBEECBGFHEAEAGADFFECBAHHFBGFGHEHHDCCHC at CAA
-            // This test case on first five-letter crib should succeed at 128(CAA) and give a false stop at 110(BFG)
-            // BEACH -> GBEEC  
-           
-           // Crib.Text = "??ACHHEAD";
-     
-            tbWindow.Text = "BFF";
-
-            bombeCanvas = new Canvas()
+            bombeCanvas = new Canvas()      // All the bombe wiring and scramblers live on a canvas
             {
                 Background = Brushes.PowderBlue,
                 Height = botY + 50,
                 Width = ColWidth * 8 + LeftMargin
             };
 
-            theScroller = new ScrollViewer()
+            theScroller = new ScrollViewer()    // A scrollviewer liets us deal with canvases that are too large
             {
                 Margin = new Thickness(0, WindowTopMargin, 0, 0),
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Auto
@@ -107,25 +99,42 @@ namespace TinyBombe
             mainGrid.Children.Add(theScroller);
 
 
-            bCipher = new CipherCribBlocks(64);
-            bCipher.Margin = new Thickness(70, 70, 0, 0);
-            mainGrid.Children.Add(bCipher);
+            // Ciphers and cribs are handled in a special component that keeps things aligned, etc.
+            cc = new CipherCribControl(96);
+            cc.Margin = new Thickness(70, 55, 0, 0);
+            mainGrid.Children.Add(cc);
 
-            bCrib = new CipherCribBlocks(64);
-            bCrib.Margin = new Thickness(70, 70+bCipher.Height, 0, 0);
-            mainGrid.Children.Add(bCrib);
 
-            bCrib.Text = "??ACHHEAD";
+            // Some testdata to start with.  
+            // BEAD ACE BEACH BABE FED DEAD DAD BAD FEED EGGHEAD EGGED BEG BEGGED CAGED AGED FACED
+            // DEADHEAD BEHEAD EACH DEED FEE EGGHEAD GAFF
+
+            // BEACHHEADGEACHGBEACHGBABEGFEDGDADGBEAD->GBEECECBCCCBECCGBHFGCFBHGCGGGCBCCHADBG at BFG
+            // BEACHHEADGEACHGBEACHGBABEGFEDGDADGBEAD->GBEECBGFHEAEAGADFFECBAHHFBGFGHEHHDCCHC at CAA
+            // This test case on first five-letter crib should succeed at 128(CAA) and give a false stop at 110(BFG)
+            // BEACH -> GBEEC  
+
+            tbWindow.Text = "BFF";
+
+            cc.Crib.Text = "??ACHHEAD";
             // Initial puzzle is hardwired
             string fullPlainMessage = "BEACHHEADGAGBEACHGBABEGFEDGDADGEACHGBEAD";
             string windowKey = "CAA";
-            bCipher.Text = getFullInterceptedMessage(windowKey, fullPlainMessage);
+            cc.Cipher.Text = getFullInterceptedMessage(windowKey, fullPlainMessage);
+
+
             RebuildBombe();
             // And first time only, change the Window size. 
             this.Height = botY + 140;
-        }
 
-       
+            // Attach a few more handlers that we don't want in the XAML
+            useDiagonals.Click += cbUseDiagonalBoard_Click;
+            btnOpenAll.Click += btnOpenAll_Click;
+            btnCloseAll.Click += btnCloseAll_Click;
+            btnToggleAll.Click += btnToggleAll_Click;
+            cc.EnterKeyPressed += () => { RebuildBombe(); };
+            cc.TextChanged += (isValid) => { if (isValid) { RebuildBombe(); } else { ClearCanvas(); } };
+        }
 
         private void AddSamplesToMenu()
         {
@@ -138,19 +147,31 @@ namespace TinyBombe
             return x0;
         }
 
+        void ClearCanvas()
+        {
+            Scramblers.Clear();
+            Joints.Clear();
+            bombeCanvas.Children.Clear();
+            PlugGuesses.Text = "";
+        }
+
         // Trying to untangle connections, make new cross-connects in the scrambers, etc.
-        // when the rotors move is too messy. And the So I just rebuild the whole GUI from scratch on each step.
+        // when the rotors move is too messy. So I just rebuild the whole GUI from scratch on each step.
         void RebuildBombe()
         {
-           
-
             while (true)
             {
+                if (!cc.ValidCrib)
+                {
+                    ClearCanvas();
+                    return;
+                }
                 normalizeCrib();
                 if (!validateCrib()) return;
 
-             //   List<int> scramblerRows = getScramblerRowsNeeded(Crib.Text, Cipher.Text);
-                List<int> scramblerRows = getScramblerRowsNeeded(bCrib.Text, bCipher.Text);
+
+                //   List<int> scramblerRows = getScramblerRowsNeeded(Crib.Text, Cipher.Text);
+                List<int> scramblerRows = getScramblerRowsNeeded(cc.Crib.Text, cc.Cipher.Text);
                 int maxRow = scramblerRows.Max();
                 botY = TopBusMargin + maxRow * RowHeight + 120;
 
@@ -164,11 +185,11 @@ namespace TinyBombe
 
                 makeBuses();
 
-            //    if ((bool)cbUseDiagonalBoard.IsChecked)
-           //     {
+                if ((bool)useDiagonals.IsChecked)
+                {
                     makeDiagonalBoard();
-            //    }
-                addScramblers(bCrib.Text, bCipher.Text, scramblerRows);
+                }
+                addScramblers(cc.Crib.Text, cc.Cipher.Text, scramblerRows);
                 addVoltageSource();
                 bool atStop = isTestRegisterTriggered();
                 if (atStop)
@@ -187,19 +208,18 @@ namespace TinyBombe
                 // we demand execution of some (empty) code at an even-lower-priority-than-display-updating.
                 // In old Windows Forms this was called DoEvents();
                 Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new Action(delegate { }));
-  
+
                 bool endOfRun = advanceWindow();
                 if (endOfRun)
                 {
 
-                    Label endRun = new Label() { Content = "End", Foreground = Brushes.Black, FontSize = 20, FontWeight = FontWeights.Bold, Background = Brushes.Yellow};
+                    Label endRun = new Label() { Content = "End", Foreground = Brushes.Black, FontSize = 20, FontWeight = FontWeights.Bold, Background = Brushes.Yellow };
                     Canvas.SetTop(endRun, 30);
                     Canvas.SetLeft(endRun, xFor(7, 8));
                     bombeCanvas.Children.Add(endRun);
                     isFreeRunning = false;
                     break;
                 }
-               
             }
             RecoverMessage();
         }
@@ -219,14 +239,14 @@ namespace TinyBombe
 
         private bool validateCrib()
         {
-            string crib =bCrib.Text;
+            string crib = cc.Crib.Text;
             if (crib.Length == 0)
             {
                 string msg = $"The crib cannot be empty (hint: ...BEHEADED...)";
                 MessageBox.Show(msg, "TinyBombe: Empty Crib");
                 return false;
             }
-            string intercept = bCipher.Text;
+            string intercept = cc.Cipher.Text;
             for (int i=0; i < crib.Length; i++)
             {
                 if (crib[i] != '?' && crib[i]==intercept[i])
@@ -241,7 +261,7 @@ namespace TinyBombe
 
         private void normalizeCrib()
         {
-            string s = bCrib.Text.ToUpper();
+            string s = cc.Crib.Text.ToUpper();
             StringBuilder sb = new StringBuilder();
             foreach (char c in s)
             {
@@ -254,15 +274,14 @@ namespace TinyBombe
                     sb.Append(' ');
                 }
             }
-
-            bCrib.Text = sb.ToString();
+            cc.Crib.Text = sb.ToString();
         }
 
         private void RecoverMessage()
         {
             Scrambler sc = new Scrambler(0, 0, 0);
             sc.Index = Scrambler.FromWindowView(tbWindow.Text);
-            string cp = bCipher.Text;
+            string cp = cc.Cipher.Text;
             string plain = sc.EncryptText(cp);
             if ((bool)cbReplaceSpaces.IsChecked)
             {
@@ -332,6 +351,7 @@ namespace TinyBombe
         private void btnScan_Click(object sender, RoutedEventArgs e)
         {
             tbWindow.Text = "AAA";
+            PlugGuesses.Text = "";
             startScanCycle = DateTime.Now;
             isFreeRunning = true;
             RebuildBombe();
@@ -589,8 +609,14 @@ namespace TinyBombe
 
         #region Diagonal Board:  Build the diagonal board wiring, provide switches to selectively disconnect lines, etc.
 
-        // Why the diagonal board works and is justified is an tricky concept for me.  So a lot of 
+        // Why the diagonal board works and is justified was a tricky concept for me.  So a lot of 
         // tedious over-engineered effort around this feature to provide an interactive playground. 
+        // My "aha" moment came from the Ellsbury article.  Each bus line in the machine represents
+        // an hypothesis, e.g. the E.a bus line represents the hypothesis that E is steckered to A.
+        // And the machine's purpose is not to find the correct wheel settings.  The machine's purpose
+        // is in negative logic: to discard the wheel settings that cannot be true.  
+        // If E is steckered to A, it cannot also be steckered to any other letter. So that creates the 
+        // contradiction, and the evidence to reject the wheel setting.
 
         private void makeDiagonalBoard()
         {
@@ -835,30 +861,28 @@ namespace TinyBombe
             }
         }
 
-        private void Crib_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-            {
-                RebuildBombe();
-            }
-        }
-
-        private void Cipher_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-            {
-                RebuildBombe();
-            }
-        }
-
-        #endregion
-
         private void btnRandomPuzzle_Click(object sender, RoutedEventArgs e)
         {
-            bCipher.Text = Scrambler.InterceptRandomEncryptedMessage("BEHEADED");
-            bCrib.Text = "BEHEADED";
+            cc.Crib.Text = "BEACHED";
+            Scrambler sc = Scrambler.MakeRandomlySetupScrambler();
+            string plainText = Scrambler.MakeRandomMessage(cc.Crib.Text);
+            string cipherText = sc.EncryptText(plainText);
+
+            cc.Cipher.Text = cipherText;
+
+            int indx = (sc.Index - plainText.Length + 512) % 512;
+            string hintReText = plainText.Replace("G", " ");
+            int pos = plainText.IndexOf(cc.Crib.Text);
+            hintText = $"wheels={Scrambler.ToWindowView(indx)} PlugboardMap={sc.plugboardMap} plainText=\"{hintReText}\" index={pos + 1}";
+
+
             tbWindow.Text = "AAA";
             RebuildBombe();
+        }
+
+        private void btnHint_Click(object sender, RoutedEventArgs e)
+        {
+            this.Title = hintText;
         }
 
         private void PlugGuesses_KeyDown(object sender, KeyEventArgs e)
@@ -867,18 +891,8 @@ namespace TinyBombe
             {
                 RecoverMessage();
             }
-
         }
 
-        private void button_Click(object sender, RoutedEventArgs e)
-        {
-         
-        }
-
-        private void Window_KeyDown(object sender, KeyEventArgs e)
-        {
-            bCrib.DealWithKeypress(sender, e);
-            e.Handled = true;
-        }
+        #endregion
     }
 }

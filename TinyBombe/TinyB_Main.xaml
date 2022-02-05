@@ -5,14 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TinyBombe"
         mc:Ignorable="d"
-        Title="Pete's 8-Letter Bombe Visualizer" Height="800" Width="1200" KeyDown="Window_KeyDown">
-    <Grid x:Name="mainGrid" Margin="-9,0,9,0">
+        Title="Pete's 8-Letter Bombe Visualizer" Height="800" Width="1200" >
+    <Grid x:Name="mainGrid"    >
         <Menu x:Name="mainMenu" Height="18" Width="173" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="49,3,0,0">
             <MenuItem Header="Diagonals">
-                <MenuItem Header="Use/Remove Diagonal Board"/>
-                <MenuItem Header="Open All"/>
-                <MenuItem Header="Close All"/>
-                <MenuItem Header="Toggle All"/>
+                <CheckBox x:Name="useDiagonals"  Content="Use Welchman's Diagonal Board" IsChecked="True"></CheckBox>
+                <MenuItem  x:Name="btnOpenAll" Header="Open All" />
+                <MenuItem  x:Name="btnCloseAll" Header="Close All" />
+                <MenuItem  x:Name="btnToggleAll" Header="Toggle All"/>
             </MenuItem>
 
             <MenuItem Header="Examples"/>
@@ -23,22 +23,22 @@
         <Button x:Name="btnBack" Content="-" HorizontalAlignment="Left" Margin="241,3,0,0" VerticalAlignment="Top"   Width="20" Height="21" Click="btnBack_Click"/>
         <Button x:Name="btnFwd" Content="+" HorizontalAlignment="Left" Margin="305,3,0,0" VerticalAlignment="Top"  Width="20" Height="21" Click="btnFwd_Click"/>
 
-        <Label  Content="Crib:" HorizontalAlignment="Left" Margin="33,93,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
-        <Label  Content="Intercept:" HorizontalAlignment="Left" Margin="10,73,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
-        <Label  Content="Decoded (no plugs):" HorizontalAlignment="Left" Margin="853,2,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
-        <Label  x:Name="Recovered" Content="Hello, World!" HorizontalAlignment="Left" Margin="853,22,0,0" Padding="0"    VerticalAlignment="Top" Height="18" FontFamily="Consolas" FontWeight="Bold" FontSize="14"/>
-        <CheckBox x:Name="cbReplaceSpaces" Content="Replace 'G's by spaces" HorizontalAlignment="Left" Margin="990,3,0,0" VerticalAlignment="Top" IsChecked="True" Click="cbReplaceSpaces_Click" Width="141"/>
+        <Label  Content="Crib:" HorizontalAlignment="Left" Margin="33,78,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
+        <Label  Content="Intercept:" HorizontalAlignment="Left" Margin="10,58,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
+        <Label  Content="Decoded (no plugs):" HorizontalAlignment="Left" Margin="778,2,0,0" Padding="0"    VerticalAlignment="Top" Height="18"/>
+        <Label  x:Name="Recovered" Content="Hello, World!" HorizontalAlignment="Left" Margin="778,22,0,0" Padding="0"    VerticalAlignment="Top" Height="18" FontFamily="Consolas" FontWeight="Bold" FontSize="14"/>
+        <CheckBox x:Name="cbReplaceSpaces" Content="Replace 'G's by spaces" HorizontalAlignment="Left" Margin="900,3,0,0" VerticalAlignment="Top" IsChecked="True" Click="cbReplaceSpaces_Click" Width="141"/>
 
-        <Button  Content="Scan"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="298,30,0,0" VerticalAlignment="Top" Width="56" Click="btnScan_Click"  />
-        <Button x:Name="btnResume" Content="Resume"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="230,29,0,0" VerticalAlignment="Top" Width="58" Click="btnResume_Click"  />
-        <Button x:Name="btnPause" Content="Pause"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="166,28,0,0" VerticalAlignment="Top" Width="56" Click="btnPause_Click"  />
+        <Button  Content="Scan All"  Padding="0"  HorizontalAlignment="Left" Height="21" Margin="240,29,0,0" VerticalAlignment="Top" Width="59" Click="btnScan_Click"  />
+        <Button x:Name="btnResume" Content="Resume"  Padding="0"  HorizontalAlignment="Left" Height="21" Margin="335,29,0,0" VerticalAlignment="Top" Width="55" Click="btnResume_Click"  />
+        <Button x:Name="btnPause" Content="Pause"  Padding="0"  HorizontalAlignment="Left" Height="18" Margin="335,3,0,0" VerticalAlignment="Top" Width="55" Click="btnPause_Click"  />
 
-        <Label  Content="Guess plugs:" HorizontalAlignment="Left" Margin="658,42,0,0" Padding="0"    VerticalAlignment="Top" Height="20" />
-        <Label  x:Name="RecoveredWithPlugs"  Content="Hello, World!" HorizontalAlignment="Left" Margin="853,43,0,0" Padding="0"    VerticalAlignment="Top" Height="18" FontFamily="Consolas" FontWeight="Bold" FontSize="14"/>
-        <TextBox x:Name="PlugGuesses" HorizontalAlignment="Left" Height="19" Text =""  CharacterCasing="Upper"  Margin="739,43,0,0"   VerticalAlignment="Top" Width="97" FontFamily="Consolas" FontWeight="Bold" FontSize="14" KeyDown="PlugGuesses_KeyDown"  />
+        <Label  Content="Guess plugs:" HorizontalAlignment="Left" Margin="583,40,0,0" Padding="0"    VerticalAlignment="Top" Height="20" />
+        <Label  x:Name="RecoveredWithPlugs"  Content="Hello, World!" HorizontalAlignment="Left" Margin="778,43,0,0" Padding="0"    VerticalAlignment="Top" Height="18" FontFamily="Consolas" FontWeight="Bold" FontSize="14"/>
+        <TextBox x:Name="PlugGuesses" HorizontalAlignment="Left" Height="19" Text =""  CharacterCasing="Upper"  Margin="664,40,0,0"   VerticalAlignment="Top" Width="97" FontFamily="Consolas" FontWeight="Bold" FontSize="14" KeyDown="PlugGuesses_KeyDown"  />
 
-        <Button x:Name="btnRandomPuzzle" Content="Random puzzle"  Padding="0"  HorizontalAlignment="Left" Height="19" Margin="516,103,0,0" VerticalAlignment="Top" Width="96" Click="btnRandomPuzzle_Click"  />
-       <Button x:Name="button" Content="Button" HorizontalAlignment="Left" Margin="35,42,0,0" VerticalAlignment="Top" Click="button_Click"/>
+        <Button x:Name="btnRandomPuzzle" Content="Generate Random puzzle"  Padding="0"  HorizontalAlignment="Left" Height="19" Margin="19,33,0,0" VerticalAlignment="Top" Width="149" Click="btnRandomPuzzle_Click"  />
+        <Button x:Name="btnHint" Content="Hint" HorizontalAlignment="Left" Margin="664,11,0,0" VerticalAlignment="Top" Width="39" Click="btnHint_Click"/>
 
 
     </Grid>
