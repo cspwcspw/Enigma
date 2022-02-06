@@ -59,6 +59,7 @@ namespace TinyBombe
             VerticalAlignment = VerticalAlignment.Top;
             HorizontalAlignment = HorizontalAlignment.Left;
 
+            Crib.PreviewKeyDown += Crib_PreviewKeyDown;
             Crib.TextChanged += Either_TextChanged;
             Cipher.TextChanged += Either_TextChanged;
 
@@ -73,6 +74,11 @@ namespace TinyBombe
             Children.Add(Whoops);
         }
 
+        private void Crib_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            
+        }
+
         private void Either_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == System.Windows.Input.Key.Enter)
@@ -84,9 +90,39 @@ namespace TinyBombe
 
         private void Either_TextChanged(object sender, TextChangedEventArgs e)
         {
+            TextBox tb = (TextBox)sender;
+            //  tb.DeclareChangeBlock();
+            // https://stackoverflow.com/questions/18971198/can-you-replace-characters-in-a-textbox-as-you-type
+            //foreach (TextChange tc in e.Changes)
+            //{
+            //    if (tc.AddedLength == 0)
+            //    {
+            //        continue;
+            //    }
+            //    int offset = tc.Offset;
+            //    char c = tb.Text[offset];
+            //    if (c != '?')
+            //    {
+            //        if (c < 'A' || c > 'H')
+            //        {
+            //            tb.Select(offset, 1);
+            //            tb.SelectedText = tb.SelectedText.Replace(c, '?');
+            //            // tb.Text.Replace(( = 'Q';
+            //        }
+            //    }
+            //}
+
             string cip = Cipher.Text.ToUpper();
             string crb = Crib.Text.ToUpper();
             int n = Math.Min(cip.Length, crb.Length);
+            if (n == 0)
+            {
+                Whoops.Visibility = Visibility.Visible;
+                SetLeft(Whoops, 0);
+                ValidCrib = false;
+                TextChanged?.Invoke(false);
+                return;
+            }
 
             for (int i = 0; i < n; i++)
             {
@@ -96,14 +132,13 @@ namespace TinyBombe
                     SetLeft(Whoops, (i + 0.5) * fontPitch);
                     ValidCrib = false;
                     TextChanged?.Invoke(false);
-                    
+
                     return;
                 }
             }
             Whoops.Visibility = Visibility.Hidden;
             ValidCrib = true;
             TextChanged?.Invoke(true);
-            
         }
 
         private void addGridlines()
@@ -129,6 +164,14 @@ namespace TinyBombe
                 CharacterCasing =  CharacterCasing.Upper,
             };
             return result;
+        }
+
+        internal void ReplaceCribText(string normalizedText)
+        {
+            // Replace text in the textbox while preserving the caret.
+            int caret = Crib.CaretIndex;
+            Crib.Text = normalizedText;
+            Crib.CaretIndex = caret;
         }
 
 

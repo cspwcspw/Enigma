@@ -48,18 +48,29 @@ namespace TinyBombe
         const int TopBusMargin = 30;
         const char leftRightArrow = '\u2194';  //https://www.fileformat.info/info/unicode/char/search.htm
 
-        List<Scrambler> Scramblers =  new List<Scrambler>();
-        Line[,] busWires;
-        Brush HotBrush = Brushes.IndianRed;
-        Connections Joints;  // This keeps track of electrical joints between Shapes on the GUI, so that we can propagate Hot voltages.
-        Dictionary<string, bool>? diagonalSwitchClosed = null;   // Persistent across calls to ResetToInitialState, built on first call to makeDiagonalBoard
-        ScrollViewer theScroller;  // The WPF designer and I are not particularly good friends, so a lot of GUI stuff is built in code. 
-        Canvas bombeCanvas;
+        List<Scrambler> Scramblers;
 
+        ConnectionManager cManager;
+
+      //  Brush HotBrush = Brushes.IndianRed;
+        Brush HotBrush = Brushes.Red;
+        Brush ColdBrush = Brushes.Blue;
+        Brush bombeBackgroundBrush = Brushes.LightCyan;
+
+       Dictionary<string, bool>? diagonalSwitchClosed = null;   // Persistent across calls to ResetToInitialState, built on first call to makeDiagonalBoard
+        ScrollViewer theScroller;  // The WPF designer and I are not particularly good friends, so a lot of GUI stuff is built in code instead. 
+
+        Canvas backLayer;            // Holds the other three layers.
+        Canvas dotCanvas;            // Connector dots that I want behind everything else and scrambler icons without wiring or connections
+        Canvas persistentCanvas;     // Middle layer, persistent wiring 
+        Canvas scramblerFixedCanvas;
+        Canvas scramblerWireCanvas;  // Foreground layer, connections from a bus through the scramblers to the other bus.
+
+        Polygon Vcc;            // The voltage source (Voltage at the Common Collector)
         int VccAttachesAt = 34; // this is a packed Column*8+Wire telling us which bus and wire to apply the VCC source voltage to.
         bool VccIsHot = true;   // Persist whether the user wants voltage applied when we advance to other wheel positions
 
-        int botY;  // Calculated depending on crib length and how many scrambler layout rows are needed, used in a couple of places for layout and sizing.
+        double botY;  // Calculated depending on crib length and how many scrambler layout rows are needed, used in a couple of places for layout and sizing.
 
         string uppers = "ABCDEFGH";
         string lowers = "abcdefgh";
@@ -71,6 +82,8 @@ namespace TinyBombe
 
         CipherCribControl cc;
 
+        int freeRunningCount = 0;
+
         #endregion
 
         #region Constructor and Rebuilding Bombe Canvas when anything changes 
@@ -80,14 +93,17 @@ namespace TinyBombe
 
             AddSamplesToMenu(); // Oops, there are none yet
 
-            Joints = new Connections(HotBrush);
-
-            bombeCanvas = new Canvas()      // All the bombe wiring and scramblers live on a canvas
+            backLayer = new Canvas()
             {
-                Background = Brushes.PowderBlue,
-                Height = botY + 50,
+                Background = bombeBackgroundBrush,
+                
                 Width = ColWidth * 8 + LeftMargin
             };
+
+            dotCanvas = makeLayer();
+            persistentCanvas = makeLayer();
+            scramblerFixedCanvas = makeLayer();
+            scramblerWireCanvas = makeLayer();
 
             theScroller = new ScrollViewer()    // A scrollviewer liets us deal with canvases that are too large
             {
@@ -95,7 +111,7 @@ namespace TinyBombe
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Auto
             };
 
-            theScroller.Content = bombeCanvas;
+            theScroller.Content = backLayer;
             mainGrid.Children.Add(theScroller);
 
 
@@ -114,9 +130,10 @@ namespace TinyBombe
             // This test case on first five-letter crib should succeed at 128(CAA) and give a false stop at 110(BFG)
             // BEACH -> GBEEC  
 
-            tbWindow.Text = "BFF";
+            // tbWindow.Text = "BFF";
+            tbWindow.Text = "BAA";
 
-            cc.Crib.Text = "??ACHHEAD";
+            cc.Crib.Text = "E?ACHHEAD";
             // Initial puzzle is hardwired
             string fullPlainMessage = "BEACHHEADGAGBEACHGBABEGFEDGDADGEACHGBEAD";
             string windowKey = "CAA";
@@ -125,15 +142,30 @@ namespace TinyBombe
 
             RebuildBombe();
             // And first time only, change the Window size. 
-            this.Height = botY + 140;
+            this.Height = WindowTopMargin + backLayer.Height + 40;
 
-            // Attach a few more handlers that we don't want in the XAML
+            // Attach a few more handlers that we don't want firing from the XAML
             useDiagonals.Click += cbUseDiagonalBoard_Click;
             btnOpenAll.Click += btnOpenAll_Click;
             btnCloseAll.Click += btnCloseAll_Click;
             btnToggleAll.Click += btnToggleAll_Click;
             cc.EnterKeyPressed += () => { RebuildBombe(); };
-            cc.TextChanged += (isValid) => { if (isValid) { RebuildBombe(); } else { ClearCanvas(); } };
+            cc.TextChanged += (isValid) => { 
+                RebuildBombe(); 
+            };
+        }
+
+        Canvas makeLayer()
+        {
+            Canvas result = new Canvas()
+            {
+                Background = Brushes.Transparent,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+
+            };
+            backLayer.Children.Add(result);
+            return result;
         }
 
         private void AddSamplesToMenu()
@@ -147,67 +179,91 @@ namespace TinyBombe
             return x0;
         }
 
-        void ClearCanvas()
-        {
-            Scramblers.Clear();
-            Joints.Clear();
-            bombeCanvas.Children.Clear();
-            PlugGuesses.Text = "";
-        }
-
-        // Trying to untangle connections, make new cross-connects in the scrambers, etc.
-        // when the rotors move is too messy. So I just rebuild the whole GUI from scratch on each step.
         void RebuildBombe()
         {
-            while (true)
+
+            List<int> scramblerRows = getScramblerRowsNeeded(cc.Crib.Text, cc.Cipher.Text);
+            int maxRow = scramblerRows.Count > 0 ? scramblerRows.Max() : 1;
+
+       
+            botY = TopBusMargin + maxRow * RowHeight + DiagonalBoardHeight;
+
+            double heightThatIsAvailable = this.Height - WindowTopMargin;
+           
+            backLayer.Height = Math.Max(botY + DiagonalBoardHeight, heightThatIsAvailable);
+
+
+            persistentCanvas.Children.Clear();
+
+            cManager = new ConnectionManager(HotBrush, ColdBrush);
+     
+            cManager.AddBusLines(makeBuses());
+
+            if ((bool)useDiagonals.IsChecked)
             {
-                if (!cc.ValidCrib)
+                makeDiagonalBoard();
+            }
+
+            dotCanvas.Children.Clear();
+            scramblerFixedCanvas.Children.Clear();
+            scramblerWireCanvas.Children.Clear();
+
+            if (!cc.ValidCrib) return;
+            normalizeCrib();
+
+            Scramblers = createScramblers(cc.Crib.Text, cc.Cipher.Text, scramblerRows);
+            foreach (Scrambler sc in Scramblers)
+            {
+                placeScrambler(sc);
+            }
+            addVoltageSource();
+            //Joints.SetBarrier();
+            freeRunningCount = 0;
+
+            while (true)   // Within this loop, the machine can advance so the cross-connects are recreated for each scrambler 
+            {
+ 
+                cManager.ClearTempsAndVoltage();
+ 
+                dotCanvas.Children.Clear();
+                scramblerWireCanvas.Children.Clear();
+
+                foreach (Scrambler sc in Scramblers)
                 {
-                    ClearCanvas();
-                    return;
+                    pluginScrambler(sc);
                 }
-                normalizeCrib();
-                if (!validateCrib()) return;
 
-
-                //   List<int> scramblerRows = getScramblerRowsNeeded(Crib.Text, Cipher.Text);
-                List<int> scramblerRows = getScramblerRowsNeeded(cc.Crib.Text, cc.Cipher.Text);
-                int maxRow = scramblerRows.Max();
-                botY = TopBusMargin + maxRow * RowHeight + 120;
-
-                bombeCanvas.Height = botY + DiagonalBoardHeight;
-
-                Scramblers.Clear();
-                Joints.Clear();
-                bombeCanvas.Children.Clear();
-
-                busWires = new Line[8, 8];
-
-                makeBuses();
-
-                if ((bool)useDiagonals.IsChecked)
+                if (VccIsHot) // Push the voltage through the wiring
                 {
-                    makeDiagonalBoard();
+                    int bus = VccAttachesAt / 8;
+                    int wire = VccAttachesAt % 8;
+                    Vcc.Stroke = HotBrush;
+                    Vcc.Fill = HotBrush;
+                  //  Joints.MakeItLive(busWires[bus, wire]);
+                    cManager.ApplyVoltage(bus, wire);
                 }
-                addScramblers(cc.Crib.Text, cc.Cipher.Text, scramblerRows);
-                addVoltageSource();
+                else
+                {
+                    Vcc.Stroke = ColdBrush;
+                    Vcc.Fill = ColdBrush;
+
+                }
+
                 bool atStop = isTestRegisterTriggered();
                 if (atStop)
                 {
-                    Label stop = new Label() { Content = "Stop!", ToolTip = "This is a candidate - Send it for futher manual analysis.", Foreground = Brushes.Black, FontSize = 20, FontWeight = FontWeights.Bold, Background = Brushes.Magenta };
+                    Label stop = new Label() {  Content = "Stop!", ToolTip = "This is a candidate - Send it for futher manual analysis.", Foreground = Brushes.Black, FontSize = 20, FontWeight = FontWeights.Bold, Background = Brushes.Magenta };
                     Canvas.SetTop(stop, 30);
                     Canvas.SetLeft(stop, xFor(7, 8));
-                    bombeCanvas.Children.Add(stop);
+                    persistentCanvas.Children.Add(stop);
                     isFreeRunning = false;
                 }
 
                 if (!isFreeRunning) break;
 
-                // The freeRunning case / closed processing loops in general in WPF can be tricky.  We need a magic spell.
-                // Painting the display is a low-prioity deferred task for WPF. so we have to force WPF to paint before doing the next round,
-                // we demand execution of some (empty) code at an even-lower-priority-than-display-updating.
-                // In old Windows Forms this was called DoEvents();
-                Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new Action(delegate { }));
+                freeRunningCount++;
+
+                forceGuiUpdate();
 
                 bool endOfRun = advanceWindow();
                 if (endOfRun)
@@ -216,7 +272,7 @@ namespace TinyBombe
                     Label endRun = new Label() { Content = "End", Foreground = Brushes.Black, FontSize = 20, FontWeight = FontWeights.Bold, Background = Brushes.Yellow };
                     Canvas.SetTop(endRun, 30);
                     Canvas.SetLeft(endRun, xFor(7, 8));
-                    bombeCanvas.Children.Add(endRun);
+                    persistentCanvas.Children.Add(endRun);
                     isFreeRunning = false;
                     break;
                 }
@@ -224,9 +280,18 @@ namespace TinyBombe
             RecoverMessage();
         }
 
+        private void forceGuiUpdate()
+        {
+            // The freeRunning case / closed processing loops in general in WPF can be tricky.  We need a magic spell.
+            // Painting the display is a low-prioity deferred task for WPF. so we have to force WPF to paint before doing the next round,
+            // we demand execution of some (empty) code at an even-lower-priority-than-display-updating.
+            // In old Windows Forms this was called DoEvents();
+            Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new Action(delegate { }));
+        }
+
         private string getFullInterceptedMessage(string windowKey, string fullPlainMessage)
         {
-            Scrambler sc = new Scrambler(0, 0, 0);
+            Scrambler sc = new Scrambler(0, 0, 0, 0);
             sc.Index = Scrambler.FromWindowView(windowKey);
             string error = sc.SetPlugboard("AE GB");
             if (!String.IsNullOrEmpty(error))
@@ -237,27 +302,6 @@ namespace TinyBombe
             return cipherText;
         }
 
-        private bool validateCrib()
-        {
-            string crib = cc.Crib.Text;
-            if (crib.Length == 0)
-            {
-                string msg = $"The crib cannot be empty (hint: ...BEHEADED...)";
-                MessageBox.Show(msg, "TinyBombe: Empty Crib");
-                return false;
-            }
-            string intercept = cc.Cipher.Text;
-            for (int i=0; i < crib.Length; i++)
-            {
-                if (crib[i] != '?' && crib[i]==intercept[i])
-                {
-                    string msg = $"An Enigma never encodes a letter to itstelf.\nThis crib and ciphertext both have '{crib[i]}' at offset {i}.";
-                    MessageBox.Show(msg, "TinyBombe: Impossible Crib");
-                    return false;
-                }
-            }
-            return true;
-        }
 
         private void normalizeCrib()
         {
@@ -274,12 +318,12 @@ namespace TinyBombe
                     sb.Append(' ');
                 }
             }
-            cc.Crib.Text = sb.ToString();
+            cc.ReplaceCribText(sb.ToString());
         }
 
         private void RecoverMessage()
         {
-            Scrambler sc = new Scrambler(0, 0, 0);
+            Scrambler sc = new Scrambler(0, 0, 0, 0);
             sc.Index = Scrambler.FromWindowView(tbWindow.Text);
             string cp = cc.Cipher.Text;
             string plain = sc.EncryptText(cp);
@@ -332,16 +376,20 @@ namespace TinyBombe
 
         private bool isTestRegisterTriggered()
         {
-            // VccSource is part of my test register, so we test where attaches
-            int hotCount = 0;
             int testBus = VccAttachesAt / 8;
-            for (int wire = 0; wire < 8; wire++)
-            {
-                if (Joints.IsLive(busWires[testBus, wire]))
-                {
-                    hotCount++;
-                }
-            }
+
+            int hotCount = cManager.CountHotWires(testBus);
+
+            // VccSource is part of my test register, so we test where attaches
+            //int hotCount = 0;
+            //int testBus = VccAttachesAt / 8;
+            //for (int wire = 0; wire < 8; wire++)
+            //{
+            //    if (Joints.IsLive(busWires[testBus, wire]))
+            //    {
+            //        hotCount++;
+            //    }
+            //}
             bool atStop = (hotCount == 1 || hotCount == 7);
             return atStop;
         }
@@ -389,22 +437,25 @@ namespace TinyBombe
         {
             // Add the VCC source
             PointCollection pc = new PointCollection() { new Point(0, 0), new Point(-10, -20), new Point(0, -14), new Point(10, -20), new Point(0, 0) };
-            Polygon VccTag = new Polygon() { Points = pc, Fill = Brushes.Blue, Stroke = Brushes.Blue };
-            VccTag.MouseUp += VccTag_MouseUp;
+            Vcc = new Polygon() { Name = "VccTag", Points = pc, Fill = ColdBrush, Stroke = ColdBrush };
+            Vcc.MouseUp += Vcc_MouseUp;
             int attachedBus = VccAttachesAt / 8;
             int attachedWire = VccAttachesAt % 8;
 
             string tip = $"Tests the hypothesis that {uppers[attachedBus]} is steckered to {uppers[attachedWire]}. If so, no other wire in this bus can light up.";
-            VccTag.ToolTip = tip;
-            Canvas.SetLeft(VccTag, xFor(attachedBus, attachedWire));
-            Canvas.SetTop(VccTag, TopBusMargin);
+            Vcc.ToolTip = tip;
+            Canvas.SetLeft(Vcc, xFor(attachedBus, attachedWire));
+            Canvas.SetTop(Vcc, TopBusMargin);
 
-            bombeCanvas.Children.Add(VccTag);
-            Joints.Join(VccTag, busWires[attachedBus, attachedWire]);
-            if (VccIsHot) // Push the voltage through the wiring
-            {
-                Joints.MakeItLive(VccTag);
-            }
+            persistentCanvas.Children.Add(Vcc);
+   
+            //if (VccIsHot) // Push the voltage through the wiring
+            //{
+            //    //  Joints.MakeItLive(busWires[attachedBus, attachedWire]);
+            //    theCm.ApplyVoltage(attachedBus, attachedWire);
+            //    Vcc.Fill = HotBrush;
+            //    Vcc.Stroke = HotBrush;
+            //}
 
             ContextMenu mnu = new ContextMenu();
             for (char bus='A'; bus <= 'H'; bus++)
@@ -418,10 +469,10 @@ namespace TinyBombe
                     theItem.Items.Add(subItem);
                 }
             }       
-            VccTag.ContextMenu = mnu;
+            Vcc.ContextMenu = mnu;
         }
 
-        private void VccTag_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void Vcc_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (e.ChangedButton != MouseButton.Left)
             {
@@ -430,14 +481,19 @@ namespace TinyBombe
             Shape p = sender as Shape;
             if (p.Stroke == HotBrush)
             {
-                Joints.DisconnectAllVoltages();
                 VccIsHot = false;
+                p.Fill = ColdBrush;
+                p.Stroke = ColdBrush;
             }
             else
             {
                 VccIsHot = true;
-                Joints.MakeItLive(p);
+                int bus = VccAttachesAt / 8;
+                int wire = VccAttachesAt % 8;
+                p.Fill = HotBrush;
+                p.Stroke = HotBrush;
             }
+            RebuildBombe();
         }
 
         private void VccSubItem_Click(object sender, RoutedEventArgs e)
@@ -480,8 +536,9 @@ namespace TinyBombe
             return rows;
         }
 
-        private void addScramblers(string crib, string cipher, List<int> scramblerRow)
+        private List<Scrambler> createScramblers(string crib, string cipher, List<int> scramblerRow)
         {
+            List<Scrambler> scramblers = new List<Scrambler>();
             for (int i = 0; i < crib.Length; i++)
             {
                 if (crib[i] == ' ') continue;  // ignore wildcard don't-cares in crib
@@ -494,117 +551,141 @@ namespace TinyBombe
                     leftBus = rightBus;
                     rightBus = temp;
                 }
-                int col = (leftBus + rightBus) / 2;
-                int row = scramblerRow[i];
 
-                Canvas cnvs = new Canvas() { Background = Brushes.Tan, Width = ScramblerSize, Height = ScramblerSize };
-                Scrambler sc = new Scrambler(i, leftBus, rightBus, cnvs);
-                Scramblers.Add(sc);
-                placeAndPlugup(sc, row, leftBus, col, rightBus);
-            }
-            updateScramblerCrossConnects();
-        }
-
-        void placeAndPlugup(Scrambler sc, int row, int leftBus, int posCol, int rightBus)
-        {
-            Canvas scramblerCanvas = sc.Tag as Canvas;
-            double xMid = (xFor(posCol, 7) + xFor(posCol + 1, 0)) / 2; // middle of channel
-            double x0 = xMid - scramblerCanvas.Width / 2;
-            Canvas.SetLeft(scramblerCanvas, x0);
-            double y0 = row * RowHeight + TopBusMargin + 5 * WireChannelWidth;
-            Canvas.SetTop(scramblerCanvas, y0);
-            bombeCanvas.Children.Add(scramblerCanvas);
-
-            // Plug the scrambler into the buses on either side
-            double w0 = xFor(leftBus, 0);
-            double y = y0 + WireChannelWidth / 2;
-            double dotSize = WireChannelWidth - 2;
-            double halfDotSz = dotSize / 2;
-            for (int i = 0; i < 8; i++)
-            {
-                Line p = new Line() { X1 = w0, X2 = x0, Y1 = y, Y2 = y, Stroke = Brushes.Blue, StrokeThickness = WireThickness };
-                bombeCanvas.Children.Add(p);
-                Ellipse theDot = new Ellipse() { Width = dotSize, Height = dotSize, Stroke = Brushes.Blue, Fill = Brushes.Blue };
-                Canvas.SetTop(theDot, y - halfDotSz);
-                Canvas.SetLeft(theDot, w0 - halfDotSz);
-                bombeCanvas.Children.Add(theDot);
-                y += WireChannelWidth;
-                w0 += WireChannelWidth;
-                Joints.Join(busWires[leftBus, i], p);
-                Joints.Join(theDot, p);
-            }
-
-            double w1 = xFor(rightBus, 0);
-            y = y0 + WireChannelWidth / 2;
-            x0 = xMid + scramblerCanvas.Width / 2; // Right edge of scramber icon
-            for (int i = 0; i < 8; i++)
-            {
-                Line p = new Line() { X1 = x0, X2 = w1, Y1 = y, Y2 = y, Stroke = Brushes.Blue, StrokeThickness = WireThickness };
-                bombeCanvas.Children.Add(p);
-                Ellipse theDot = new Ellipse() { Width = dotSize, Height = dotSize, Stroke = Brushes.Blue, Fill = Brushes.Blue };
-                Canvas.SetTop(theDot, y - halfDotSz);
-                Canvas.SetLeft(theDot, w1 - halfDotSz);
-                bombeCanvas.Children.Add(theDot);
-                y += WireChannelWidth;
-                w1 += WireChannelWidth;
-                Joints.Join(busWires[rightBus, i], p);
-                Joints.Join(theDot, p);
-            }
-        }
-
-        private void updateScramblerCrossConnects()
-        {
-            string txt = tbWindow.Text.ToUpper().Trim();
-            if (txt.Length != 3)
-            {
-                MessageBox.Show("Window settings must be three letters. Only A-G allowed");
-                return;
-            }
-            for (int i = 0; i < 3; i++)
-            {
-                char c = txt[i];
-                if (c < 'A' || c > 'H')
-                {
-                    MessageBox.Show("Window settings invalid. Only A-G allowed");
-                    return;
-                }
-            }
-            int baseIndex = Scrambler.FromWindowView(txt);
-            for (int i = 0; i < Scramblers.Count; i++)
-            {
-                Canvas cnvs = Scramblers[i].Tag as Canvas;
-                int stepsAhead = Scramblers[i].StepOffsetInMenu;
-                int myIndex = (baseIndex + stepsAhead) % 512;
-                string map = Scramblers[i][myIndex];
-                string myWindowText = $"{Scrambler.ToWindowView(myIndex)} (+{stepsAhead})";
-                cnvs.Children.Clear();
                 Label lbl = new Label()
                 {
-                    Content = myWindowText,
+                    Content = "???",
                     FontFamily = new FontFamily("Consolas"),
                     FontStyle = FontStyles.Normal,
                     FontWeight = FontWeights.Bold,
                     FontSize = 12,
                 };
-                Canvas.SetLeft(lbl, -2);
-                Canvas.SetTop(lbl, -17);
-                cnvs.Children.Add(lbl);
 
-                int leftBus = Scramblers[i].LeftBus;
-                int rightBus = Scramblers[i].RightBus;
+ 
 
-                for (int w = 0; w < 8; w++) // map each wire
+                Canvas cnvs = new Canvas() { Background = new SolidColorBrush(Color.FromArgb(64,64,64,64)), Width = ScramblerSize, Height = ScramblerSize };
+                Scrambler sc = new Scrambler(i, scramblerRow[i], leftBus, rightBus, cnvs, lbl);
+                scramblerFixedCanvas.Children.Add(cnvs);
+                scramblerFixedCanvas.Children.Add(lbl);
+                scramblers.Add(sc);
+            }
+            return scramblers;
+        }
+
+        void placeScrambler(Scrambler sc)
+        {
+            int leftBus = sc.LeftBus;
+            int rightBus = sc.RightBus;
+            int posCol = (leftBus + rightBus) / 2;
+            int row = sc.Row;
+
+            Canvas cnvs = sc.Tag as Canvas;
+
+            double xMid = (xFor(posCol, 7) + xFor(posCol + 1, 0)) / 2; // middle of channel
+            double leftEdge = xMid - cnvs.Width / 2; // Left edge of scramber icon
+                                                     //   double rightEdge = xMid + cnvs.Width / 2; // Right edge of scramber icon
+            double y0 = row * RowHeight + TopBusMargin + 5 * WireChannelWidth;
+            // Move the scrambler box
+            Canvas.SetLeft(cnvs, leftEdge);
+            Canvas.SetTop(cnvs, y0);
+
+            Label caption = sc.Caption as Label;
+            // move its label 
+            Canvas.SetLeft(caption, leftEdge - 2);
+            Canvas.SetTop(caption, y0 - 17);
+
+        }
+
+        void pluginScrambler(Scrambler sc)
+        {
+            // Recreate the cross-connects because the window mapping and scrambling has changed.
+            int leftBus = sc.LeftBus;
+            int rightBus = sc.RightBus;
+            int posCol = (leftBus + rightBus) / 2;
+            int row = sc.Row;
+
+            Canvas cnvs = sc.Tag as Canvas;
+            double xMid = (xFor(posCol, 7) + xFor(posCol + 1, 0)) / 2; // middle of channel
+            double rightEdge = xMid + cnvs.Width / 2; // Right edge of scramber icon
+            double leftEdge = xMid - cnvs.Width / 2; // Left edge of scramber icon
+
+            double y0 = row * RowHeight + TopBusMargin + 5 * WireChannelWidth;
+
+       
+            double xTopL = xFor(leftBus, 0);    // Where to plug into the left bus
+            double xTopR = xFor(rightBus, 0);   // where to plug into the right Bus
+            double yTop = y0 + WireChannelWidth / 2;
+
+            // Find the mapping, remove previous children, and build the cross-connect wiring ... also decorate the scrambler canvas
+
+            string txt = tbWindow.Text.ToUpper().Trim();
+            int baseIndex = Scrambler.FromWindowView(txt);
+            int stepsAhead = sc.StepOffsetInMenu;
+            int myIndex = (baseIndex + stepsAhead) % 512;
+            string map = sc[myIndex];
+            string myWindowText = $"{Scrambler.ToWindowView(myIndex)} (+{stepsAhead})";
+            Label caption2 = sc.Caption as Label;
+            caption2.Content = myWindowText;
+
+            cnvs.Children.Clear();
+            for (int i = 0; i < 8; i++)
+            {
+                PointCollection pts = new PointCollection();
+                double y = yTop + i * WireChannelWidth;
+                double w0 = xTopL + i * WireChannelWidth;
+
+                pts.Add(new Point(w0, y));
+                pts.Add(new Point(leftEdge, y));
+
+                double w1 = xTopR + i * WireChannelWidth;
+
+                int outWireIndx = map[i] - 'A';
+                double y1 = WireChannelWidth / 2 + WireChannelWidth * i;
+                double y2 = WireChannelWidth / 2 + WireChannelWidth * (outWireIndx);
+
+                double rhs = yTop + WireChannelWidth * (outWireIndx);
+
+
+                pts.Add(new Point(rightEdge, rhs));
+                pts.Add(new Point(xTopR + outWireIndx * WireChannelWidth, rhs));
+
+                PointCollection pts2 = new PointCollection();
+                foreach (Point p in pts)
                 {
-                    double y1 = WireChannelWidth / 2 + WireChannelWidth * w;
-                    double y2 = WireChannelWidth / 2 + WireChannelWidth * (map[w] - 'A');
-                    Line wire = new Line() { X1 = 0, X2 = cnvs.Width, Y1 = y1, Y2 = y2, Stroke = Brushes.Blue };
-                    cnvs.Children.Add(wire);
-                    Joints.Join(busWires[leftBus, w], wire);
-                    Joints.Join(busWires[rightBus, map[w] - 'A'], wire);
+                    pts2.Add(new Point(p.X, p.Y));
                 }
 
+               
+                Polyline pLine = new Polyline()
+                {
+                    Stroke = ColdBrush,
+                    Points = pts2,
+                };
+                //    pLine.Name=$"SC_at_offset_{sc.StepOffsetInMenu}_LeftBus{leftBus}_{i}__RightBus{rightBus}_{outWireIndx}";  
+
+                addJoinerDot(w0, y);
+                addJoinerDot(w1, y);
+                scramblerWireCanvas.Children.Add(pLine);
+
+                cManager.AddScramblerCrossConnect(leftBus, i, rightBus, outWireIndx, pLine);
+                //Joints.Join(busWires[leftBus, i], pLine);
+                //Joints.Join(busWires[rightBus, outWireIndx], pLine);
             }
         }
+
+        private void addJoinerDot(double x, double y)
+        {
+            const double dotSize = WireChannelWidth; // - 2;
+            const double halfDotSz = dotSize / 2;
+
+            Ellipse theDot = new Ellipse() { Width = dotSize, Height = dotSize, Stroke = Brushes.Gray }; 
+            
+            Canvas.SetTop(theDot, y - halfDotSz);
+            Canvas.SetLeft(theDot, x - halfDotSz);
+
+            dotCanvas.Children.Add(theDot); // Put the dots on the canvas behind the wires
+        }
+
         #endregion
 
         #region Diagonal Board:  Build the diagonal board wiring, provide switches to selectively disconnect lines, etc.
@@ -664,62 +745,56 @@ namespace TinyBombe
 
             double dbXMargin = 10;
             double dbYPosn = botY - WireChannelWidth;
-            Canvas diagBoard = new Canvas() { Height = 18 * WireChannelWidth, Width = bombeCanvas.Width-2*dbXMargin, Background = Brushes.LightGray };
+            Canvas diagBoard = new Canvas() { Height = 18 * WireChannelWidth, Width = persistentCanvas.Width-2*dbXMargin, Background = Brushes.LightGray };
 
             foreach (string s in layout)
             {
                 string wireName = s.Substring(0, 2);
                 bool isClosed = diagonalSwitchClosed[wireName];
-                int src = s[0] - 'A';
-                int dst = s[1] - 'A';
+                int srcBus = s[0] - 'A';
+                int dstBus = s[1] - 'A';
 
                 double chan = 15 - double.Parse(s.Substring(2));
-                double switchPos = xFor(src, 12);
+                double switchPos = xFor(srcBus, 12);
 
-                double x0 = xFor(src, dst) -dbXMargin;
-                double x4 = xFor(dst, src) - dbXMargin;
+                double x0 = xFor(srcBus, dstBus) -dbXMargin;
+                double x4 = xFor(dstBus, srcBus) - dbXMargin;
 
                 //    double y = botY + chan * WireChannelWidth;  // y coordinate of the channel
                 double y = (chan + 1.5) * WireChannelWidth;  // y coordinate of the channel
 
 
 
-                string toolTip = $"{uppers[src]}.{lowers[dst]} {leftRightArrow} {uppers[dst]}.{lowers[src]} ";
+                string toolTip = $"{uppers[srcBus]}.{lowers[dstBus]} {leftRightArrow} {uppers[dstBus]}.{lowers[srcBus]} ";
                 Canvas theSwitch = makeSwitch(switchPos, y, isClosed, toolTip, wireName);
 
-                Brush bWire = Brushes.Blue;   // isClosed ? Brushes.Blue : Brushes.Gray;
+                Brush bWire = ColdBrush;   // isClosed ? ColdBrush : Brushes.Gray;
 
                 // There is a cheat here.The vertical bus wires are extended or cut to exactly terminate at the crosswire channel.
-                busWires[src, dst].Y2 = y+dbYPosn;
-                busWires[dst, src].Y2 = y+dbYPosn;
+              //  busWires[src, dst].Y2 = y+dbYPosn;
+              //  busWires[dst, src].Y2 = y+dbYPosn;
 
 
                 double leftedge = Canvas.GetLeft(theSwitch);
                 double rightEdge = leftedge + theSwitch.Width;
-                Line p = new Line() { X1 = x0, X2 = leftedge, Y1 = y, Y2 = y, Stroke = bWire, StrokeThickness = WireThickness };
-                Canvas.SetLeft(p, 0);
-                Canvas.SetTop(p, 0);
-                diagBoard.Children.Add(p);
+                Line pLeft = new Line() {X1 = x0, X2 = leftedge, Y1 = y, Y2 = y, Stroke = bWire, StrokeThickness = WireThickness };
+                // pLeft.Name = Name = $"DBL_{s}";
+                Canvas.SetLeft(pLeft, 0);
+                Canvas.SetTop(pLeft, 0);
+                diagBoard.Children.Add(pLeft);
 
-                Line pRight = new Line() { X1 = rightEdge, X2 = x4, Y1 = y, Y2 = y, Stroke = bWire, StrokeThickness = WireThickness };
+                Line pRight = new Line() {  X1 = rightEdge, X2 = x4, Y1 = y, Y2 = y, Stroke = bWire, StrokeThickness = WireThickness };
+                // pRight.Name = Name = $"DBR_{s}";
                 Canvas.SetLeft(pRight, 0);
                 Canvas.SetTop(pRight, 0);
                 diagBoard.Children.Add(pRight);
 
-
-                Joints.Join(busWires[src, dst], p);
-                Joints.Join(busWires[dst, src], pRight);
-
-                if (isClosed)
-                {
-                    Joints.Join(p, pRight);
-                }
-
+                cManager.AddDiagonalBoardWire(srcBus, pLeft, dstBus, pRight, y + dbYPosn, isClosed);
                 diagBoard.Children.Add(theSwitch); // Put it down last so it stays foremost.
             }
             Canvas.SetLeft(diagBoard,  dbXMargin);
             Canvas.SetTop(diagBoard, dbYPosn);
-            bombeCanvas.Children.Insert(0, diagBoard);
+            persistentCanvas.Children.Insert(0, diagBoard);
 
         }
 
@@ -800,33 +875,37 @@ namespace TinyBombe
         #endregion
 
         #region Buses: Build the bus wiring
-        void makeBuses()
+        Line[] makeBuses()
         {
+            Line[] result = new Line[64];
             int topY = TopBusMargin;
+            int next = 0;
             for (int bus = 0; bus < 8; bus++)
             {
                 for (int wire = 0; wire < 8; wire++)
                 {
                     double x0 = xFor(bus, wire);
-                    Line p = new Line() { X1 = x0, X2 = x0, Y1 = topY, Y2 = botY, Stroke = Brushes.Blue, StrokeThickness = WireThickness };
+                    Line p = new Line() { X1 = x0, X2 = x0, Y1 = topY, Y2 = botY, Stroke = ColdBrush, StrokeThickness = WireThickness, Name=$"bus{bus}{wire}" };
 
-                    busWires[bus, wire] = p;
+                  //  busWires[bus, wire] = p;
+                    result[next++] = p;
                     Canvas.SetLeft(p, 0);
                     Canvas.SetTop(p, 0);
-                    bombeCanvas.Children.Add(p);
+                    persistentCanvas.Children.Add(p);
                 }
 
                 // Labels near top of each bus
                 Label name = new Label() { Foreground = Brushes.Black, Content = (char)('A' + bus), FontFamily = new FontFamily("Consolas"), FontSize = 20, FontWeight = FontWeights.Bold };
                 Canvas.SetLeft(name, xFor(bus, -3));
                 Canvas.SetTop(name, topY-28);
-                bombeCanvas.Children.Add(name);
+                persistentCanvas.Children.Add(name);
 
                 Label minorNames = new Label() { Foreground = Brushes.Black, Content = "abcdefgh", FontFamily = new FontFamily("Consolas"), FontSize =13, FontWeight = FontWeights.Bold };
                 Canvas.SetLeft(minorNames, xFor(bus, -1) -2);
                 Canvas.SetTop(minorNames, topY - 22);
-                bombeCanvas.Children.Add(minorNames);
+                persistentCanvas.Children.Add(minorNames);
             }
+            return result;
         }
 
         #endregion

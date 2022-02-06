@@ -19,16 +19,20 @@ namespace TinyBombe
         public string plugboardMap { get; private set; } = "ABCDEFGH";
  
 
-        public int LeftBus { get; private set; }  // just a place to keep some info for the GUI
+        public int LeftBus { get; private set; }  // Some properties relating to placement on the GUI
         public int RightBus { get; private set; }
-        public object? Tag { get; set; }        // Keep a reference to the UIElement/Canvas when used with a WPF GUI
+        public int Row { get; private set; }
+        public object? Tag { get; set; }        // Keep a reference to the Canvas when used with a WPF GUI
+        public object? Caption { get; set; }    // Keep a reference to this scrambler's caption object, when used with a WPF GUI
 
-        public Scrambler(int stepOffset, int left, int right, object? tag = null)
+        public Scrambler(int stepOffset, int row, int left, int right, object? tag = null, object? caption = null)
         {
             StepOffsetInMenu = stepOffset;
             LeftBus = left;
             RightBus = right;
+            Row = row;
             Tag = tag;
+            Caption = caption;
         }
 
         /// <summary>
@@ -38,7 +42,7 @@ namespace TinyBombe
         public static Scrambler MakeRandomlySetupScrambler()
         {
             Random rnd = new Random();
-            Scrambler result = new Scrambler(0, 0, 0);
+            Scrambler result = new Scrambler(0, 0, 0, 0);
             result.Index = rnd.Next(128);
             char[] map = "ABCDEFGH".ToCharArray();
             List<int> indexes = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 7 };
@@ -121,10 +125,15 @@ namespace TinyBombe
         public string SetPlugboard(string plugs)
         {
             char[] newMap = "ABCDEFGH".ToCharArray();
-            string[] parts = plugs.ToUpper().Trim().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string part in parts) {
-                int c1 = part[0] - 'A';
-                int c2 = part[1] - 'A';
+            string withoutSpaces = plugs.Replace(" ", "");
+            if (withoutSpaces.Length % 2 != 0)
+            {
+                return "Plugboard has odd length, invalid, must be pairs of letters";
+            }
+            for (int i = 1; i < withoutSpaces.Length; i += 2)
+            {
+                int c1 = withoutSpaces[i-1] - 'A';
+                int c2 = withoutSpaces[i] - 'A';
                 if (c1 < 0 || c1 >= 8 || c2 < 0 || c2 >= 8)
                 {
                     plugboardMap = "ABCDEFGH";
