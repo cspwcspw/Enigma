@@ -77,10 +77,10 @@ namespace TinyBombe
             string[] cribbable = {  };
 
             string[] shortWord = {
-                   "A", "BE",  "BED", "BEE",  "ADD", "ADA", "FAB",  "FED", "CAB",  "DAD", "BAD", "FAD",  "FEE", "EBB"};
+                   "A", "ABE", "BE",  "BED", "BEE",  "ADD", "ADA", "FAB",  "FED", "CAB", "CAD", "DAD", "BAD", "FAD",  "FEE", "EBB"};
             string[] scrabbleWord = {
-                 "BEAD",  "BEACHBABE", "BEACHHEAD", "BEACHED", "ABE", "ACED", "BABE", "FEED", "DEAD", "DEAF", "DEADHEAD", "BEHEAD", "EACH", "DEED",  
-                  "FACED"  };
+                  "ACED", "BEAD",  "BEACHBABE", "BEACHHEAD", "BEACHED", "BEDDED", "BABE", "BEHEAD", "DEAD", "DEAF", "DEADHEAD", "DEADHEADED", "EACH", "DEED",  
+                  "FACE", "FEED",  "FACED"  };
 
             int cribPos = rnd.Next(3) + 1;
             StringBuilder sb = new StringBuilder();
